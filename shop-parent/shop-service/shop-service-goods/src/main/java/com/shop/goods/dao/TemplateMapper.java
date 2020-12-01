@@ -1,4 +1,8 @@
 package com.shop.goods.dao;
 
-public interface TemplateMapper {
+import com.shop.goods.pojo.Template;
+import tk.mybatis.mapper.common.Mapper;
+
+public interface TemplateMapper extends Mapper<Template> {
+
 }
