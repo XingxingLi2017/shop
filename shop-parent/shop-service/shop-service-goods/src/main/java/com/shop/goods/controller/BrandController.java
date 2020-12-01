@@ -8,7 +8,9 @@ import com.shop.goods.service.BrandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin
@@ -60,6 +62,12 @@ public class BrandController {
         return new Result(true, StatusCode.OK, "Get brands successfully.", list);
     }
 
+    /****
+     * pagination
+     * @param page
+     * @param size
+     * @return
+     */
     @GetMapping("/search/{page}/{size}")
     public Result<PageInfo> findPage(@PathVariable  Integer page, @PathVariable  Integer size) {
         int q = 10 / 0;
@@ -67,9 +75,26 @@ public class BrandController {
         return new Result<PageInfo>(true, StatusCode.OK, "Get brands successfully.", pageInfo);
     }
 
+    /****
+     * pagination with conditions
+     * @param brand
+     * @param page
+     * @param size
+     * @return
+     */
     @PostMapping("/search/{page}/{size}")
     public Result<PageInfo> findPage(@RequestBody Brand brand, @PathVariable  Integer page, @PathVariable  Integer size){
         PageInfo<Brand> pageInfo = brandService.findPage(brand, page, size);
         return new Result<PageInfo>(true, StatusCode.OK, "Get brands successfully.", pageInfo);
     }
+
+    /****
+     * find brand list by category id
+     */
+    @GetMapping("/category/{categoryName}")
+    public Result<List<Map>> findBrandListByCategoryName(@PathVariable String categoryName) throws UnsupportedEncodingException {
+        List<Map> list = brandService.findBrandListByCategoryName(categoryName);
+        return new Result(true, StatusCode.OK, "Get brands successfully.", list);
+    }
+
 }

@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class BrandServiceImpl implements BrandService {
@@ -77,6 +78,11 @@ public class BrandServiceImpl implements BrandService {
         PageHelper.startPage(page, size);
         List<Brand> list = brandMapper.selectByExample(example);
         return new PageInfo<Brand>(list);
+    }
+
+    @Override
+    public List<Map> findBrandListByCategoryName(String categoryName) {
+        return brandMapper.findBrandListByCategoryName(categoryName);
     }
 
     /****

@@ -4,6 +4,7 @@ import com.github.pagehelper.PageInfo;
 import com.shop.goods.pojo.Brand;
 
 import java.util.List;
+import java.util.Map;
 
 public interface BrandService {
 
@@ -36,5 +37,12 @@ public interface BrandService {
      * @return
      */
     PageInfo<Brand> findPage(Brand brand, int page, int size);
+
+    /**
+     * get brand list through category name
+     * @param categoryName
+     * @return
+     */
+    List<Map> findBrandListByCategoryName(String categoryName);
 
 }
