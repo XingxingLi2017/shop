@@ -29,5 +29,7 @@ public interface SpecService {
      * @param categoryName
      * @return
      */
-    public List<Map> findSpecListByCategoryName(String categoryName);
+    List<Map> findSpecListByCategoryName(String categoryName);
+
+    List<Spec> findByCategory(Integer categoryId);
 }

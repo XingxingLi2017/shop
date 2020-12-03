@@ -18,4 +18,9 @@ public interface BrandMapper extends Mapper<Brand> {
             "                                       FROM tb_category" +
             "                                       WHERE NAME = #{categoryName})) ORDER BY seq ASC")
     List<Map> findBrandListByCategoryName(@Param("categoryName")String categoryName);
+
+    @Select(" SELECT tb.*" +
+            " FROM tb_brand tb, tb_category_brand tcb" +
+            " WHERE tb.id = tcb.brand_id AND tcb.category_id=#{categoryId}")
+    List<Brand> findByCategory(@Param("categoryId") Integer categoryId);
 }

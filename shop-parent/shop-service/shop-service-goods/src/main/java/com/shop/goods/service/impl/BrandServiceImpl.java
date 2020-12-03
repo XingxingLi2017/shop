@@ -85,6 +85,11 @@ public class BrandServiceImpl implements BrandService {
         return brandMapper.findBrandListByCategoryName(categoryName);
     }
 
+    @Override
+    public List<Brand> findByCategory(Integer categoryId) {
+        return brandMapper.findByCategory(categoryId);
+    }
+
     /****
      * create conditions
      * @param brand

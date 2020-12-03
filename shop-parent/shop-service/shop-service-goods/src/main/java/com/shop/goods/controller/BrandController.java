@@ -91,9 +91,15 @@ public class BrandController {
     /****
      * find brand list by category id
      */
-    @GetMapping("/category/{categoryName}")
+//    @GetMapping("/category/{categoryName}")
     public Result<List<Map>> findBrandListByCategoryName(@PathVariable String categoryName) throws UnsupportedEncodingException {
         List<Map> list = brandService.findBrandListByCategoryName(categoryName);
+        return new Result(true, StatusCode.OK, "Get brands successfully.", list);
+    }
+
+    @GetMapping("/category/{id}")
+    public Result<List<Brand>> findBrandByCategory(@PathVariable Integer id) {
+        List<Brand> list = brandService.findByCategory(id);
         return new Result(true, StatusCode.OK, "Get brands successfully.", list);
     }
 

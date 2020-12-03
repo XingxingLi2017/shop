@@ -64,9 +64,15 @@ public class SpecController {
         return new Result(true,StatusCode.OK,"Get spec successfully.", pageResult);
     }
 
-    @GetMapping("/category/{categoryName}")
+//    @GetMapping("/category/{categoryName}")
     public Result<List<Map>> findSpecListByCategoryName(@PathVariable String categoryName) {
         List<Map> list = specService.findSpecListByCategoryName(categoryName);
+        return new Result(true, StatusCode.OK, "Get spec successfully.", list);
+    }
+
+    @GetMapping("/category/{id}")
+    public Result<List<Map>> findByCategoryId(@PathVariable Integer id) {
+        List<Spec> list = specService.findByCategory(id);
         return new Result(true, StatusCode.OK, "Get spec successfully.", list);
     }
 }

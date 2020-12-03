@@ -36,4 +36,9 @@ public interface CategoryService {
      * @return
      */
     Page<Category> findPage(Map<String, Object> searchMap, int page, int size);
+
+    /****
+     * get children of a parent category , level 1 categories' pid = 0
+     */
+    List<Category> findByParentId(Integer id);
 }

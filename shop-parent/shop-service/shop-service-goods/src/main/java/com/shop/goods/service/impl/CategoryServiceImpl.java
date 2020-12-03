@@ -62,6 +62,13 @@ public class CategoryServiceImpl implements CategoryService {
         return (Page<Category>) categoryMapper.selectByExample(example);
     }
 
+    @Override
+    public List<Category> findByParentId(Integer id) {
+        Category c = new Category();
+        c.setParentId(id);
+        return categoryMapper.select(c);
+    }
+
     private Example createExample(Map<String, Object> map) {
         Example example = new Example(Category.class);
         Example.Criteria criteria = example.createCriteria();

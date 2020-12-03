@@ -45,4 +45,6 @@ public interface BrandService {
      */
     List<Map> findBrandListByCategoryName(String categoryName);
 
+    List<Brand> findByCategory(Integer categoryId);
+
 }

@@ -69,4 +69,13 @@ public class CategoryController {
         PageResult pageResult=new PageResult(pageList.getTotal(),pageList.getResult());
         return new Result(true,StatusCode.OK,"Get categories successfully.", pageResult);
     }
+
+    /****
+     * get categories through categories' parent id
+     */
+    @GetMapping("/list/{pid}")
+    public Result<List<Category>> findByParentId(@PathVariable Integer pid){
+        List<Category> list = categoryService.findByParentId(pid);
+        return new Result(true, StatusCode.OK, "Get categories successfully." , list);
+    }
 }

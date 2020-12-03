@@ -2,13 +2,16 @@ package com.shop.goods.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.shop.goods.dao.CategoryMapper;
 import com.shop.goods.dao.SpecMapper;
+import com.shop.goods.pojo.Category;
 import com.shop.goods.pojo.Spec;
 import com.shop.goods.service.SpecService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +20,9 @@ public class SpecServiceImpl implements SpecService {
 
     @Autowired
     SpecMapper specMapper;
+
+    @Autowired
+    CategoryMapper categoryMapper;
 
     @Override
     public List<Spec> findAll() {
@@ -71,6 +77,17 @@ public class SpecServiceImpl implements SpecService {
             spec.put("options", options);
         }
         return list;
+    }
+
+    @Override
+    public List<Spec> findByCategory(Integer categoryId) {
+        Category c = categoryMapper.selectByPrimaryKey(categoryId);
+        if(c == null) {
+            return new ArrayList<>();
+        }
+        Spec spec = new Spec();
+        spec.setTemplateId(c.getTemplateId());
+        return specMapper.select(spec);
     }
 
     private Example createExample(Map<String, Object> searchMap) {
