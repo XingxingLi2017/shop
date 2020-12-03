@@ -9,18 +9,20 @@ import java.util.List;
 
 public interface SpuService {
 
-    void realDel(String id);
+    void update(Goods goods);
+
+    void realDelete(String id);
 
     void restore(String id);
 
-    void putMany(Long[] spuIds);
+    void putMany(String[] spuIds);
 
-    void put(Long spuId);
+    void put(String spuId);
 
-    void pull(Long spuId); // off the shelf
-    void audit(Long spuId);
+    void pull(String spuId); // off the shelf
+    void audit(String spuId);
 
-    Goods findGoodsById(Long id);
+    Goods findGoodsById(String id);
 
     /***
      * sku + spu = goods info

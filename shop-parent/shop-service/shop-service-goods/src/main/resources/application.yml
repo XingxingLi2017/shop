@@ -22,3 +22,6 @@ mybatis:
     map-underscore-to-camel-case: true
   mapper-locations: classpath:mapper/*Mapper.xml  #scan mapper xml file when needed
   type-aliases-package: com.shop.goods.pojo
+# used for IdWorker
+wrokerId: 0
+dataCenterId: 0

@@ -3,10 +3,7 @@ package com.shop.goods.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.shop.goods.dao.BrandMapper;
-import com.shop.goods.dao.CategoryMapper;
-import com.shop.goods.dao.SkuMapper;
-import com.shop.goods.dao.SpuMapper;
+import com.shop.goods.dao.*;
 import com.shop.goods.pojo.*;
 import com.shop.goods.service.SpuService;
 import com.shop.util.IdWorker;
@@ -39,8 +36,22 @@ public class SpuServiceImpl implements SpuService {
     @Autowired
     private IdWorker idWorker;
 
+    @Autowired
+    private CategoryBrandMapper categoryBrandMapper;
+
     @Override
-    public void realDel(String id) {
+    @Transactional
+    public void update(Goods goods) {
+        Spu spu = goods.getSpu();
+        spuMapper.updateByPrimaryKeySelective(spu);
+        Sku sku = new Sku();
+        sku.setSpuId(spu.getId());
+        skuMapper.delete(sku);
+        saveSkuList(goods);
+    }
+
+    @Override
+    public void realDelete(String id) {
         Spu spu = spuMapper.selectByPrimaryKey(id);
         if (!"1".equals(spu.getIsDelete())){
             throw new RuntimeException("The goods was not deleted.");
@@ -60,7 +71,7 @@ public class SpuServiceImpl implements SpuService {
     }
 
     @Override
-    public void putMany(Long[] spuIds) {
+    public void putMany(String[] spuIds) {
         // update tb_spu set IsMarketable=1 where id in (ids) and isDelete=0 and status=1
         Example example = new Example(Spu.class);
         Example.Criteria criteria = example.createCriteria();
@@ -76,7 +87,7 @@ public class SpuServiceImpl implements SpuService {
     }
 
     @Override
-    public void put(Long spuId) {
+    public void put(String spuId) {
         Spu spu = spuMapper.selectByPrimaryKey(spuId);
         if(spu.getIsDelete().equalsIgnoreCase("1")){
             throw new RuntimeException("The goods was deleted.");
@@ -90,9 +101,12 @@ public class SpuServiceImpl implements SpuService {
     }
 
     @Override
-    public void pull(Long spuId) {
+    public void pull(String spuId) {
         Spu spu = spuMapper.selectByPrimaryKey(spuId);
-        if(spu.getIsDelete().equalsIgnoreCase("1")) {
+        if(spu == null) {
+            throw new RuntimeException("The goods doesn't exist.");
+        }
+        if("1".equals(spu.getIsDelete())) {
             throw new RuntimeException("The goods was deleted.");
         }
 
@@ -101,8 +115,12 @@ public class SpuServiceImpl implements SpuService {
     }
 
     @Override
-    public void audit(Long spuId) {
+    public void audit(String spuId) {
         Spu spu = spuMapper.selectByPrimaryKey(spuId);
+
+        if(spu == null) {
+            throw new RuntimeException("The goods doesn't exist.");
+        }
         if(spu.getIsDelete().equalsIgnoreCase("1")) {
             throw new RuntimeException("The goods was deleted.");
         }
@@ -117,11 +135,12 @@ public class SpuServiceImpl implements SpuService {
      * @param id
      * @return
      */
+    @Transactional
     @Override
-    public Goods findGoodsById(Long id) {
+    public Goods findGoodsById(String id) {
         Spu spu = spuMapper.selectByPrimaryKey(id);
         Sku sku = new Sku();
-        sku.setSpuId(id + "");
+        sku.setSpuId(id);
         List<Sku> skus = skuMapper.select(sku);
         Goods goods = new Goods();
         goods.setSkuList(skus);
@@ -142,35 +161,54 @@ public class SpuServiceImpl implements SpuService {
         } else {
             // addition operation
             spu.setId(idWorker.nextId()+"");
+            spu.setIsDelete("0");
+            spu.setIsMarketable("0");
+            spu.setStatus("0");
             spuMapper.insertSelective(spu);
         }
+        saveSkuList(goods);
+    }
 
+    private void saveSkuList(Goods goods) {
+        Spu spu = goods.getSpu();
         Date date = new Date();
         Category category = categoryMapper.selectByPrimaryKey(spu.getCategory3Id());
         Brand brand = brandMapper.selectByPrimaryKey(spu.getBrandId());
 
+        // connect brand and category in tb_category_brand
+        CategoryBrand categoryBrand = new CategoryBrand();
+        categoryBrand.setBrandId(spu.getBrandId());
+        categoryBrand.setCategoryId(spu.getCategory3Id());
+        int count = categoryBrandMapper.selectCount(categoryBrand);
+        if(count != 0) {
+            categoryBrandMapper.insert(categoryBrand);
+        }
+
         List<Sku> skuList = goods.getSkuList();
-        for(Sku sku : skuList) {
-            sku.setId(idWorker.nextId()+"");
+        if(skuList != null) {
+            for(Sku sku : skuList) {
+                sku.setId(idWorker.nextId()+"");
 
-            // spu name + spec info = name
-            String name = spu.getName();
-            if(StringUtils.isEmpty(sku.getSpec())) {
-                sku.setSpec("{}");
+                // spu name + spec info = name
+                String name = spu.getName();
+                if(StringUtils.isEmpty(sku.getSpec())) {
+                    sku.setSpec("{}");
+                }
+                Map<String, String> specMap = JSON.parseObject(sku.getSpec(), Map.class);
+                for(String key : specMap.keySet()) {
+                    name += " " + specMap.get(key);
+                }
+                sku.setName(name);
+
+                sku.setCreateTime(date);
+                sku.setUpdateTime(date);
+                sku.setSpuId(spu.getId());
+                sku.setCategoryId(category.getId());    // the level-3 category id
+                sku.setCategoryName(category.getName());
+                sku.setBrandName(brand.getName());
+
+                skuMapper.insertSelective(sku);
             }
-            Map<String, String> specMap = JSON.parseObject(sku.getSpec(), Map.class);
-            for(String key : specMap.keySet()) {
-                name += " " + specMap.get(key);
-            }
-            sku.setName(name);
-
-            sku.setCreateTime(date);
-            sku.setSpuId(spu.getId());
-            sku.setCategoryId(category.getId());    // the level-3 category id
-            sku.setCategoryName(category.getName());
-            sku.setBrandName(brand.getName());
-
-            skuMapper.insertSelective(sku);
         }
     }
 
@@ -276,7 +314,7 @@ public class SpuServiceImpl implements SpuService {
             throw new RuntimeException("Can't delete marketable goods.");
         }
         spu.setIsDelete("1");
-        spu.setStatus("0");
+        spu.setStatus("0"); // audition status
         spuMapper.updateByPrimaryKeySelective(spu);
     }
 

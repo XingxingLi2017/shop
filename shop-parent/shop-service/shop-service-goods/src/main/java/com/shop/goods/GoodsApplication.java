@@ -1,6 +1,7 @@
 package com.shop.goods;
 
 import com.shop.util.IdWorker;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
@@ -21,8 +22,12 @@ public class GoodsApplication {
      * used to generate non-duplicated ids
      * @return
      */
+    @Value("${workerId}")
+    private Integer workerId;
+    @Value("${dataCenterId}")
+    private Integer dataCenterId;
     @Bean
     public IdWorker idWorker(){
-        return new IdWorker(0, 0);
+        return new IdWorker(workerId, dataCenterId);
     }
 }

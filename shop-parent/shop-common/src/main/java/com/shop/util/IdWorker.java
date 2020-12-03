@@ -4,62 +4,46 @@ import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 
-/**
- * <p>名称：IdWorker.java</p>
- * <p>描述：分布式自增长ID</p>
- * <pre>
- *     Twitter的 Snowflake　JAVA实现方案
- * </pre>
- * 核心代码为IdWorker类的实现，其原理结构如下，分别用一个0表示一位，用—分割开部分的作用：
- * 1||0---0000000000 0000000000 0000000000 0000000000 0 --- 00000 ---00000 ---000000000000
- * 在上面的字符串中，第一位为未使用（实际上也可作为long的符号位），接下来的41位为毫秒级时间，
- * 然后5位datacenter标识位，5位机器ID（并不算标识符，实际是为线程标识），
- * 然后12位该毫秒内的当前毫秒内的计数，加起来刚好64位，为一个Long型。
- * 这样的好处是，整体上按照时间自增排序，并且整个分布式系统内不会产生ID碰撞（由datacenter和机器ID作区分），
- * 并且效率较高，经测试，snowflake每秒能够产生26万ID左右，完全满足需要。
- * <p>
- * 64位ID (42(毫秒)+5(机器ID)+5(业务编码)+12(重复累加))
- *
- */
 public class IdWorker {
-    // 时间起始标记点，作为基准，一般取系统的最近时间（一旦确定不能变动）
+    // start time of the id worker , the base for 41 bits millisecond bits
     private final static long twepoch = 1288834974657L;
-    // 机器标识位数
+    // worker id bits, the thread id bits
     private final static long workerIdBits = 5L;
-    // 数据中心标识位数
+    // id data center id , the machine's id bits
     private final static long datacenterIdBits = 5L;
-    // 机器ID最大值
+    // max worker id , get 31
     private final static long maxWorkerId = -1L ^ (-1L << workerIdBits);
-    // 数据中心ID最大值
+    // max data center id, get 31
     private final static long maxDatacenterId = -1L ^ (-1L << datacenterIdBits);
-    // 毫秒内自增位
+    // sequence bits during one millisecond
     private final static long sequenceBits = 12L;
-    // 机器ID偏左移12位
+    // shifting bits for worker id
     private final static long workerIdShift = sequenceBits;
-    // 数据中心ID左移17位
+    // shifting bits for data center id
     private final static long datacenterIdShift = sequenceBits + workerIdBits;
-    // 时间毫秒左移22位
+    // shifting bits for millisecond
     private final static long timestampLeftShift = sequenceBits + workerIdBits + datacenterIdBits;
-
+    // sequence mask used to get seqence bits quickly
     private final static long sequenceMask = -1L ^ (-1L << sequenceBits);
-    /* 上次生产id时间戳 */
+    // last timestamp that generates id
     private static long lastTimestamp = -1L;
-    // 0，并发控制
+    // 0 , control concurrency
     private long sequence = 0L;
 
+    // start worker id and data center id
     private final long workerId;
-    // 数据标识id部分
     private final long datacenterId;
 
     public IdWorker(){
+        // get data center id based on mac address of the network
         this.datacenterId = getDatacenterId(maxDatacenterId);
+
+        // get worker id based on data center id and jvm pid string hash code
         this.workerId = getMaxWorkerId(datacenterId, maxWorkerId);
     }
+
     /**
-     * @param workerId
-     *            工作机器ID
-     * @param datacenterId
-     *            序列号
+     * generate id worker based on given worker id and data center id
      */
     public IdWorker(long workerId, long datacenterId) {
         if (workerId > maxWorkerId || workerId < 0) {
@@ -71,29 +55,30 @@ public class IdWorker {
         this.workerId = workerId;
         this.datacenterId = datacenterId;
     }
-    /**
-     * 获取下一个ID
-     *
-     * @return
-     */
+
     public synchronized long nextId() {
+        // get current system millisec
         long timestamp = timeGen();
         if (timestamp < lastTimestamp) {
-            throw new RuntimeException(String.format("Clock moved backwards.  Refusing to generate id for %d milliseconds", lastTimestamp - timestamp));
+            throw new RuntimeException(String.format("Clock moved backwards. Refusing to generate id for %d milliseconds", lastTimestamp - timestamp));
         }
 
+        // get sequence if generate id in the same millisec
         if (lastTimestamp == timestamp) {
-            // 当前毫秒内，则+1
+            // in current millisec , sequence + 1
             sequence = (sequence + 1) & sequenceMask;
+
+            // sequence = 0 after increasing , the sequences was exhausted , wait for the next millisec
             if (sequence == 0) {
-                // 当前毫秒内计数满了，则等待下一秒
                 timestamp = tilNextMillis(lastTimestamp);
             }
         } else {
             sequence = 0L;
         }
+
         lastTimestamp = timestamp;
-        // ID偏移组合生成最终的ID，并返回ID
+
+        // construct id and return
         long nextId = ((timestamp - twepoch) << timestampLeftShift)
                 | (datacenterId << datacenterIdShift)
                 | (workerId << workerIdShift) | sequence;
@@ -109,18 +94,19 @@ public class IdWorker {
         return timestamp;
     }
 
+    // get system timestamp by milliseconds
     private long timeGen() {
         return System.currentTimeMillis();
     }
 
     /**
-     * <p>
-     * 获取 maxWorkerId
-     * </p>
+     * get worker id based on data center id + jvm pid string hash code
      */
     protected static long getMaxWorkerId(long datacenterId, long maxWorkerId) {
         StringBuffer mpid = new StringBuffer();
         mpid.append(datacenterId);
+        // getRuntimeMXBean() : Returns the managed bean for the runtime system of the Java virtual machine.
+        // getName() : Returns the name representing the running Java virtual machine.
         String name = ManagementFactory.getRuntimeMXBean().getName();
         if (!name.isEmpty()) {
             /*
@@ -129,15 +115,15 @@ public class IdWorker {
             mpid.append(name.split("@")[0]);
         }
         /*
-         * MAC + PID 的 hashcode 获取16个低位
+         * get the lower 16 bits of the hash code of data center id + PID
          */
         return (mpid.toString().hashCode() & 0xffff) % (maxWorkerId + 1);
     }
 
-    /**
-     * <p>
-     * 数据标识id部分
-     * </p>
+    /***
+     * get data center id based on mac address of the network
+     * @param maxDatacenterId
+     * @return
      */
     protected static long getDatacenterId(long maxDatacenterId) {
         long id = 0L;

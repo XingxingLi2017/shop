@@ -26,44 +26,42 @@ public class SpuController {
         return new Result(true,StatusCode.OK,"Restore successfully.");
     }
 
-    @DeleteMapping("/realDel/{id}")
+    @DeleteMapping("/realDelete/{id}")
     public Result realDel(@PathVariable("id") String id){
-        spuService.realDel(id);
+        spuService.realDelete(id);
         return new Result(true,StatusCode.OK,"Delete successfully.");
     }
 
     @PutMapping("/put/many")
-    public Result putMany(@RequestBody Long[] spuIds){
+    public Result putMany(@RequestBody String[] spuIds){
         spuService.putMany(spuIds);
         return new Result(true, StatusCode.OK, "Put goods successfully.");
     }
 
     @PutMapping("/put/{id}")
-    public Result put(@PathVariable("id") Long spuId){
+    public Result put(@PathVariable("id") String spuId){
         spuService.put(spuId);
         return new Result(true, StatusCode.OK, "Put goods successfully.");
     }
 
     @PutMapping("/pull/{id}")
-    public Result pull(@PathVariable("id") Long spuId){
+    public Result pull(@PathVariable("id") String spuId){
         spuService.pull(spuId);
         return new Result(true, StatusCode.OK, "Pull successfully.");
     }
 
     @PutMapping("/audit/{id}")
-    public Result audit(@PathVariable("id") Long spuId){
+    public Result audit(@PathVariable("id") String spuId){
         spuService.audit(spuId);
         return new Result(true, StatusCode.OK, "Pass the audit.");
     }
 
     /***
      * get goods( sku list + spu ) by spu id
-     * @param id
-     * @return
      */
     @GetMapping("/goods/{id}")
-    public Result findGoodsById(@PathVariable Long id) {
-        Goods goods = spuService.findGoodsById(id);
+    public Result findGoodsById(@PathVariable("id") String spuId) {
+        Goods goods = spuService.findGoodsById(spuId);
         return new Result(true, StatusCode.OK, "Get goods info successfully." , goods);
     }
 
@@ -79,19 +77,19 @@ public class SpuController {
     }
 
     @PostMapping("/search/{page}/{size}" )
-    public Result<PageInfo> findPage(@RequestBody(required = false)  Spu spu, @PathVariable  int page, @PathVariable  int size){
+    public Result<PageInfo> findPage(@RequestBody Spu spu, @PathVariable  int page, @PathVariable  int size){
         PageInfo<Spu> pageInfo = spuService.findPage(spu, page, size);
         return new Result(true, StatusCode.OK,"Get goods info successfully.",pageInfo);
     }
 
     @GetMapping("/search/{page}/{size}" )
-    public Result<PageInfo> findPage(@PathVariable  int page, @PathVariable  int size){
+    public Result<PageInfo> findPage(@PathVariable int page, @PathVariable  int size){
         PageInfo<Spu> pageInfo = spuService.findPage(page, size);
         return new Result<PageInfo>(true,StatusCode.OK,"Get goods info successfully.",pageInfo);
     }
 
     @PostMapping("/search" )
-    public Result<List<Spu>> findList(@RequestBody(required = false)  Spu spu){
+    public Result<List<Spu>> findList(@RequestBody Spu spu){
         List<Spu> list = spuService.findList(spu);
         return new Result<List<Spu>>(true,StatusCode.OK,"Get goods info successfully.",list);
     }
@@ -103,10 +101,10 @@ public class SpuController {
     }
 
     @PutMapping("/{id}")
-    public Result update(@RequestBody  Spu spu,@PathVariable String id){
-        spu.setId(id);
-        spuService.update(spu);
-        return new Result(true,StatusCode.OK,"Update successfully.");
+    public Result update(@RequestBody Goods goods,@PathVariable String id){
+        goods.getSpu().setId(id);
+        spuService.update(goods);
+        return new Result(true,StatusCode.OK,"Update goods info successfully.");
     }
 
     @PostMapping
@@ -116,9 +114,9 @@ public class SpuController {
     }
 
     @GetMapping("/{id}")
-    public Result<Spu> findById(@PathVariable String id){
-        Spu spu = spuService.findById(id);
-        return new Result<Spu>(true,StatusCode.OK,"Get goods info successfully.",spu);
+    public Result findById(@PathVariable String id){
+        Goods goods = spuService.findGoodsById(id);
+        return new Result(true,StatusCode.OK,"Get goods info successfully.",goods);
     }
 
     @GetMapping
