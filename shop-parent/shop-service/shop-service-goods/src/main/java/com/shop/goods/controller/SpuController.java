@@ -108,9 +108,9 @@ public class SpuController {
     }
 
     @PostMapping
-    public Result add(@RequestBody   Spu spu){
-        spuService.add(spu);
-        return new Result(true,StatusCode.OK,"Add successfully.");
+    public Result add(@RequestBody Goods goods){
+        spuService.add(goods);
+        return new Result(true,StatusCode.OK,"Add goods info successfully.");
     }
 
     @GetMapping("/{id}")

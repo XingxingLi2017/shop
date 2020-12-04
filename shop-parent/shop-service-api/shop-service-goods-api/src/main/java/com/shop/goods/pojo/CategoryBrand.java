@@ -2,9 +2,10 @@ package com.shop.goods.pojo;
 
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 @Table(name = "tb_category_brand")
-public class CategoryBrand {
+public class CategoryBrand implements Serializable {
 
     //分类id
     @Id

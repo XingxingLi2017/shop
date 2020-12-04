@@ -1,8 +1,9 @@
 package com.shop.goods.pojo;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Goods {
+public class Goods implements Serializable {
 
     //spu
     private Spu spu;

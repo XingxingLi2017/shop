@@ -29,6 +29,7 @@ public interface SpuService {
      * @param goods
      */
     void saveGoods(Goods goods);
+    void add(Goods goods);
 
     PageInfo<Spu> findPage(Spu spu, int page, int size);
 
