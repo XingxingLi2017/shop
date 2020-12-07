@@ -15,6 +15,7 @@
         <module>shop-service-goods</module>
         <module>shop-service-file</module>
         <module>shop-service-canal</module>
+        <module>shop-service-content</module>
     </modules>
 
     <dependencies>
