@@ -20,6 +20,12 @@ public class SpuController {
     @Autowired
     private SpuService spuService;
 
+    @DeleteMapping("/logic/delete/{id}")
+    public Result logicDelete(@PathVariable("id") String spuId){
+        spuService.delete(spuId);
+        return new Result(true,StatusCode.OK,"Delete goods successfully！");
+    }
+
     @PutMapping("/restore/{id}")
     public Result restore(@PathVariable("id") String id){
         spuService.restore(id);
