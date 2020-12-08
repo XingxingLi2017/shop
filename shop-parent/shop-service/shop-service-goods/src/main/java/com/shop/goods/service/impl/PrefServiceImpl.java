@@ -34,9 +34,7 @@ public class PrefServiceImpl implements PrefService {
 
     @Override
     public List<Pref> findList(Pref pref){
-        //构建查询条件
         Example example = createExample(pref);
-        //根据构建的条件查询数据
         return prefMapper.selectByExample(example);
     }
 

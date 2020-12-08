@@ -20,6 +20,13 @@ public class SkuServiceImpl implements SkuService {
 
 
     @Override
+    public List<Sku> findByStatus(String status) {
+        Sku sku = new Sku();
+        sku.setStatus(status);
+        return skuMapper.select(sku);
+    }
+
+    @Override
     public PageInfo<Sku> findPage(Sku sku, int page, int size){
         PageHelper.startPage(page,size);
         Example example = createExample(sku);
