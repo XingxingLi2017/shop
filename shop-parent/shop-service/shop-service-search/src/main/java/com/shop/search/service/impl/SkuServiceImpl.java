@@ -17,10 +17,7 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SkuServiceImpl implements SkuService {
@@ -54,7 +51,7 @@ public class SkuServiceImpl implements SkuService {
 
 
     /***
-     * search by conditions
+     * search by conditions , aggregating category, brand , specs
      * @param searchMap
      * @return
      */
@@ -75,8 +72,12 @@ public class SkuServiceImpl implements SkuService {
             }
         }
 
-        // add an aggregation operation
-        builder.addAggregation(AggregationBuilders.terms("skuCategoryGroup").field("categoryName"));
+        // add an aggregation operation , query categories containing keywords
+        builder.addAggregation(AggregationBuilders.terms("skuCategoryGroup").field("categoryName").size(50));
+        // get brand name list containing keywords
+        builder.addAggregation(AggregationBuilders.terms("skuBrandGroup").field("brandName").size(50));
+        // aggregate with spec , spec.keyword is used to forbid split words
+        builder.addAggregation(AggregationBuilders.terms("skuSpecGroup").field("spec.keyword").size(100));
 
         // execute query
         AggregatedPage<SkuInfo> page = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class);
@@ -84,15 +85,20 @@ public class SkuServiceImpl implements SkuService {
         // get aggregation result info
         StringTerms stringTerms = (StringTerms) page.getAggregation("skuCategoryGroup");
         List<String> categoryList = getStringsCategoryList(stringTerms);
+        List<String> brandList = getStringsCategoryList((StringTerms)page.getAggregation("skuBrandGroup"));
+        Map<String, Set<String>> specMap = getSpecMap((StringTerms) page.getAggregation("skuSpecGroup"));
 
         List<SkuInfo> contents = page.getContent();
         long totalElements = page.getTotalElements();
         int totalPages = page.getTotalPages();
+
         Map<String, Object> ret = new HashMap<>();
         ret.put("rows", contents);
         ret.put("total", totalElements);
         ret.put("totalPages", totalPages);
         ret.put("categoryList" , categoryList);
+        ret.put("brandList", brandList);
+        ret.put("specMap" , specMap);
 
         return ret;
     }
@@ -106,5 +112,25 @@ public class SkuServiceImpl implements SkuService {
             }
         }
         return categoryList;
+    }
+
+    private Map<String, Set<String>> getSpecMap(StringTerms stringTerms) {
+        Map<String , Set<String>> specMap = new HashMap<>();
+        if(stringTerms != null) {
+            for(StringTerms.Bucket bucket : stringTerms.getBuckets()) {
+                String keyAsString = bucket.getKeyAsString();
+                Map<String, String> map = JSON.parseObject(keyAsString, Map.class);
+
+                for(Map.Entry<String, String> entry : map.entrySet()) {
+                    Set<String> set = specMap.get(entry.getKey());
+                    if(set == null) {
+                        set = new HashSet<>();
+                    }
+                    set.add(map.get(entry.getKey()));
+                    specMap.put(entry.getKey(), set);
+                }
+            }
+        }
+        return specMap;
     }
 }
