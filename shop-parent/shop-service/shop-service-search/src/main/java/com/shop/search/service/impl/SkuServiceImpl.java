@@ -1,19 +1,32 @@
 package com.shop.search.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.shop.entity.Result;
 import com.shop.goods.feign.SkuFeign;
 import com.shop.goods.pojo.Sku;
 import com.shop.search.dao.SkuEsMapper;
 import com.shop.search.pojo.SkuInfo;
 import com.shop.search.service.SkuService;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.SearchResultMapper;
 import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
+import org.springframework.data.elasticsearch.core.aggregation.impl.AggregatedPageImpl;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -65,8 +78,42 @@ public class SkuServiceImpl implements SkuService {
         // add aggregations
         addAggregations(searchMap, builder);
 
+        // highlight field
+        builder.withHighlightFields(new HighlightBuilder.Field("name"));
+        // highlight pre tag and post tag
+        builder.withHighlightBuilder(new HighlightBuilder().preTags("<em style='color:red'>").postTags("</em>").fragmentSize(100));
+
         // execute query
-        AggregatedPage<SkuInfo> page = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class);
+        AggregatedPage<SkuInfo> page = elasticsearchTemplate.queryForPage(
+                builder.build(),
+                SkuInfo.class,
+                new SearchResultMapper() {      // encapsulate search hits into SkuInfo.class
+                    @Override
+                    public <T> AggregatedPage<T> mapResults(SearchResponse searchResponse, Class<T> aClass, Pageable pageable) {
+                        SearchHits hits = searchResponse.getHits();
+                        List<T> list = new ArrayList<>();
+                        for(SearchHit hit : hits) {
+                            // get contents without highlight
+                            SkuInfo skuInfo = JSON.parseObject(hit.getSourceAsString(),SkuInfo.class);
+
+                            // get highlight field fragments
+                            HighlightField highlightField = hit.getHighlightFields().get("name");
+                            if(highlightField != null && highlightField.getFragments() != null) {
+                                Text[] fragments = highlightField.getFragments();
+                                StringBuilder sb = new StringBuilder();
+                                for(Text fragment : fragments) {
+                                    sb.append(fragment.toString());
+                                }
+
+                                // replace name field string with highlight string
+                                skuInfo.setName(sb.toString());
+                            }
+                            list.add((T) skuInfo);
+                        }
+                        return new AggregatedPageImpl<T>(list, pageable, searchResponse.getHits().getTotalHits());
+                    }
+                }
+        );
 
         // get aggregation result info
         List<String> categoryList = getStringsCategoryList((StringTerms) page.getAggregation("skuCategoryGroup"));
@@ -137,7 +184,7 @@ public class SkuServiceImpl implements SkuService {
             if(!StringUtils.isEmpty(price)) {
                 price = price.replace("元" , "").replace("以上", "");
                 String[] prices = price.split("-");
-                if(prices != null && prices.length > 0) {
+                if(prices.length > 0) {
                     boolQueryBuilder.must(QueryBuilders.rangeQuery("price")
                             .gt(Integer.parseInt(prices[0])));
                     if(prices.length > 1) {
@@ -147,8 +194,33 @@ public class SkuServiceImpl implements SkuService {
                 }
             }
         }
+
+        // sort result
+        String sortField = (String) searchMap.get("sortField");
+        String sortRule = (String) searchMap.get("sortRule");
+        if(!StringUtils.isEmpty(sortField) && !StringUtils.isEmpty(sortRule)) {
+            builder.withSort(SortBuilders.fieldSort(sortField).order(SortOrder.valueOf(sortRule.toUpperCase())));
+        }
+
+        // pagination
+        int pageNum = converterPage(searchMap);
+        int size = 30;
+        builder.withPageable(PageRequest.of(pageNum - 1 , size));
+
         builder.withQuery(boolQueryBuilder);
         return builder;
+    }
+
+    private Integer converterPage(Map<String, Object> searchMap) {
+        if(searchMap != null) {
+            String pageNum = (String) searchMap.get("pageNum");
+            try {
+                return Integer.parseInt(pageNum);
+            } catch (NumberFormatException e) {
+
+            }
+        }
+        return 1;
     }
 
     private List<String> getStringsCategoryList(StringTerms stringTerms) {
