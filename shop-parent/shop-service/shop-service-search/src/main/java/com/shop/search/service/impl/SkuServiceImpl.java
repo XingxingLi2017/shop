@@ -1,7 +1,6 @@
 package com.shop.search.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.shop.entity.Result;
 import com.shop.goods.feign.SkuFeign;
 import com.shop.goods.pojo.Sku;
@@ -47,6 +46,11 @@ public class SkuServiceImpl implements SkuService {
 
     @Override
     public void importData() {
+
+        // delete old index
+        elasticsearchTemplate.deleteIndex(SkuInfo.class);
+        elasticsearchTemplate.createIndex(SkuInfo.class);
+        elasticsearchTemplate.putMapping(SkuInfo.class);
 
         Result<List<Sku>> skuResult = skuFeign.findByStatus("1");
 
@@ -110,7 +114,7 @@ public class SkuServiceImpl implements SkuService {
                             }
                             list.add((T) skuInfo);
                         }
-                        return new AggregatedPageImpl<T>(list, pageable, searchResponse.getHits().getTotalHits());
+                        return new AggregatedPageImpl<T>(list, pageable, searchResponse.getHits().getTotalHits(), searchResponse.getAggregations());
                     }
                 }
         );
