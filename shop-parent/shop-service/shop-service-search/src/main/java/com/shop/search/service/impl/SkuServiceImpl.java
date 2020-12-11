@@ -26,6 +26,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.SearchResultMapper;
 import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
 import org.springframework.data.elasticsearch.core.aggregation.impl.AggregatedPageImpl;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -136,6 +137,13 @@ public class SkuServiceImpl implements SkuService {
         ret.put("brandList", brandList);
         ret.put("specMap" , specMap);
 
+        NativeSearchQuery query = builder.build();
+        Pageable pageable = query.getPageable();
+        int pageSize = pageable.getPageSize();
+        int pageNum = pageable.getPageNumber() + 1;
+        ret.put("pageNum",pageNum);
+        ret.put("pageSize",pageSize);
+
         return ret;
     }
 
@@ -192,8 +200,12 @@ public class SkuServiceImpl implements SkuService {
                     boolQueryBuilder.must(QueryBuilders.rangeQuery("price")
                             .gt(Integer.parseInt(prices[0])));
                     if(prices.length > 1) {
-                        boolQueryBuilder.must(QueryBuilders.rangeQuery("price")
-                                .lte(Integer.parseInt(prices[1])));
+                        try {
+                            int param2 = Integer.parseInt(prices[1]);
+                            boolQueryBuilder.must(QueryBuilders.rangeQuery("price")
+                                    .lte(param2));
+                        } catch (NumberFormatException e) {
+                        }
                     }
                 }
             }

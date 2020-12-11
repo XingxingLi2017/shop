@@ -23,5 +23,6 @@
             <artifactId>shop-service-goods-api</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
     </dependencies>
 </project>
