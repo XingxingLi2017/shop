@@ -1,0 +1,34 @@
+server:
+  port: 18087
+spring:
+  application:
+    name: item
+  rabbitmq:
+    host: 192.168.77.150
+  main:
+    allow-bean-definition-overriding: true
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:7001/eureka
+  instance:
+    prefer-ip-address: true
+feign:
+  hystrix:
+    enabled: false
+  client:
+    config:
+      default:   # config default timeout limits
+        connectTimeout: 600000 # timeout limits for consumer connect this service
+        readTimeout: 600000  # timeout limits when this service call other providers
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          # if set as false, timeout will be controlled by ribbon
+          enabled: true
+        isolation:
+          strategy: SEMAPHORE
+# location for generated webpages
+pagePath: C:\Users\Xingxing Li\IdeaProjects\shop\shop-parent\shop-web\shop-web-item\src\main\resources\templates\items

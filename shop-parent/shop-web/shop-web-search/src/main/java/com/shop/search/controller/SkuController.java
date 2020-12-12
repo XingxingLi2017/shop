@@ -21,6 +21,9 @@ public class SkuController {
 
     @GetMapping("/list")
     public String search(@RequestParam(required = false) Map<String, Object> searchMap , Model model) {
+        validateSearchMap(searchMap);
+
+        // use search micro service
         Map resultMap = skuFeign.search(searchMap);
         model.addAttribute("result" , resultMap);
         model.addAttribute("searchMap", searchMap);
@@ -40,6 +43,14 @@ public class SkuController {
         model.addAttribute("page",infoPage);
 
         return "search";
+    }
+
+    private void validateSearchMap(Map<String, Object> searchMap) {
+        if(searchMap != null) {
+            for(Map.Entry<String, Object> entry : searchMap.entrySet()) {
+                entry.setValue(((String)entry.getValue()).replace("+", "%2B"));
+            }
+        }
     }
 
     private String[] url(Map<String, Object> searchMap){

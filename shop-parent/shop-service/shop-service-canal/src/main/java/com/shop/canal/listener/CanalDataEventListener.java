@@ -1,4 +1,4 @@
-package com.shop.canal;
+package com.shop.canal.listener;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;

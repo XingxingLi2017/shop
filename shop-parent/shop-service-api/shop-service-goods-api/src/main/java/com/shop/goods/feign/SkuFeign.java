@@ -13,6 +13,11 @@ import java.util.List;
 @RequestMapping("/sku")
 public interface SkuFeign {
 
+    // used for import SKU into Elasticsearch skuinfo index
     @GetMapping("/status/{status}")
     Result<List<Sku>> findByStatus(@PathVariable("status") String status);
+
+    @GetMapping("/{id}")
+    public Result<Sku> findById(@PathVariable("id") String id);
+
 }

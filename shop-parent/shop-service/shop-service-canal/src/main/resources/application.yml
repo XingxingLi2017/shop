@@ -6,6 +6,12 @@ spring:
   redis:
     host: 192.168.77.150
     port: 6379
+  rabbitmq:
+    host: 192.168.77.150
+#    port: 5672    # default settings
+#    virtual-host: /
+#    username: guest
+#    password: guest
 eureka:
   client:
     service-url:
@@ -15,6 +21,8 @@ eureka:
 feign:
   hystrix:
     enabled: true
+ribbon:
+  ReadTimeout: 10000
 #hystrix config
 hystrix:
   command:
@@ -32,3 +40,4 @@ canal:
       example:
         host: 192.168.77.150
         port: 11111
+        batchSize: 1000

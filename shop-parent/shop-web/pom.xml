@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>shop-web-search</module>
+        <module>shop-web-item</module>
     </modules>
 
     <dependencies>

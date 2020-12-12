@@ -186,8 +186,11 @@ public class SkuServiceImpl implements SkuService {
 
             // specs' map filter
             for(Map.Entry<String, Object> entry : searchMap.entrySet()) {
-                if(entry.getKey().startsWith("spec_")) {
-                    boolQueryBuilder.must(QueryBuilders.termQuery("specMap."+entry.getKey().substring(5)+".keyword", entry.getValue()));
+                String key = entry.getKey();
+                String value = (String) entry.getValue();
+                if(key.startsWith("spec_")) {
+                    value = value.replace("\\", "");
+                    boolQueryBuilder.must(QueryBuilders.termQuery("specMap."+entry.getKey().substring(5)+".keyword", value));
                 }
             }
 
