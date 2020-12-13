@@ -22,8 +22,9 @@ spring:
               # route rules
               predicates:
                 # route rules for domain
-#                - Host=cloud.shop.com**  # all urls starting with cloud.shop.com will be directed to localhost:18081
-                - Path=/api/brand/**
+                # all urls starting with cloud.shop.com will be directed to localhost:18081
+#               - Host=cloud.shop.com**
+                - Path=/api/album/**,/api/brand/**,/api/cache/**,/api/categoryBrand/**,/api/category/**,/api/para/**,/api/pref/**,/api/sku/**,/api/spec/**,/api/spu/**,/api/stockBack/**,/api/template/**
               filters:
                 - StripPrefix=1
                 - name: RequestRateLimiter # name for default request rate limiter factory
@@ -31,7 +32,12 @@ spring:
                     key-resolver: "#{@ipKeyResolver}"
                     redis-rate-limiter.replenishRate: 1
                     redis-rate-limiter.burstCapacity: 2
-
+            - id: shop-user-route
+              uri: lb://user
+              predicates:
+                - Path=/api/user/**,/api/address/**,/api/areas/**,/api/cities/**,/api/provinces/**
+              filters:
+                - StripPrefix=1
 server:
   port: 8001
 eureka:
