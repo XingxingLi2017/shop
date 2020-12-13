@@ -69,8 +69,7 @@ public class BrandController {
      * @return
      */
     @GetMapping("/search/{page}/{size}")
-    public Result<PageInfo> findPage(@PathVariable  Integer page, @PathVariable  Integer size) {
-        int q = 10 / 0;
+    public Result<PageInfo> findPage(@PathVariable("page")  Integer page, @PathVariable("size")  Integer size) {
         PageInfo<Brand> pageInfo = brandService.findPage(page, size);
         return new Result<PageInfo>(true, StatusCode.OK, "Get brands successfully.", pageInfo);
     }
@@ -83,7 +82,7 @@ public class BrandController {
      * @return
      */
     @PostMapping("/search/{page}/{size}")
-    public Result<PageInfo> findPage(@RequestBody Brand brand, @PathVariable  Integer page, @PathVariable  Integer size){
+    public Result<PageInfo> findPage(@RequestBody Brand brand, @PathVariable("page")  Integer page, @PathVariable("size")  Integer size){
         PageInfo<Brand> pageInfo = brandService.findPage(brand, page, size);
         return new Result<PageInfo>(true, StatusCode.OK, "Get brands successfully.", pageInfo);
     }

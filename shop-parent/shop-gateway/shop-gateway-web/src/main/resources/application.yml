@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: gateway-web
+  redis:
+    host: 192.168.77.150
+  cloud:
+    gateway:
+      globalcors:  # cross-origin request
+        cors-configurations:
+          '[/**]': # match all request url
+            allowedOrigins: "*"  # allow all domains
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+      routes:
+            - id: shop-goods-route
+              # destination of the router
+#              uri: http://localhost:18081
+              uri: lb://goods
+              # route rules
+              predicates:
+                # route rules for domain
+#                - Host=cloud.shop.com**  # all urls starting with cloud.shop.com will be directed to localhost:18081
+                - Path=/api/brand/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter # name for default request rate limiter factory
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 2
+
+server:
+  port: 8001
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:7001/eureka
+  instance:
+    prefer-ip-address: true
+# enable gateway
+management:
+  endpoint:
+    gateway:
+      enabled: true
+    web:
+      exposure:
+        include: true
