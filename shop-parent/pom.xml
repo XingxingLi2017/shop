@@ -15,6 +15,7 @@
         <module>shop-eureka</module>
         <module>shop-common</module>
         <module>shop-common-db</module>
+        <module>shop-user-oauth</module>
     </modules>
     <packaging>pom</packaging>
 
