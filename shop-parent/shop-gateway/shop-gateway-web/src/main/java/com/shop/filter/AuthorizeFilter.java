@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpCookie;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -14,9 +15,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Consumer;
+
 
 /***
- * global filter for user authentication
+ * global filter for user authentication in Gateway
+ * check request if has JWT token
  */
 @Component
 public class AuthorizeFilter implements GlobalFilter, Ordered {
@@ -30,25 +34,12 @@ public class AuthorizeFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         ServerHttpResponse response = exchange.getResponse();
 
-        String path = request.getURI().getPath();
-
-        if (path.startsWith("/api/user/login") || path.startsWith("/api/brand/search/")) {
-            Mono<Void> filter = chain.filter(exchange);
-            return filter;
-        }
-
-
         // check headers
         String token = request.getHeaders().getFirst(AUTHORIZE_TOKEN);
-
-        // true : token is in headers
-        // false : token is not in headers
-        boolean hasToken = true;
 
         // check params
         if(StringUtils.isEmpty(token)) {
             token = request.getQueryParams().getFirst(AUTHORIZE_TOKEN);
-            hasToken = false;
         }
 
         // check cookies
@@ -60,16 +51,31 @@ public class AuthorizeFilter implements GlobalFilter, Ordered {
         }
 
         // parse token
-        try {
-            JwtUtil.parseJWT(token);
+//        try {
+//            JwtUtil.parseJWT(token);
+//            // put token into headers for authorization in Oauth 2.0
+//            request.mutate().header(AUTHORIZE_TOKEN, token);
+//
+//            return chain.filter(exchange);
+//        } catch (Exception e) {
+//            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+//            return response.setComplete();
+//        }
 
-            // put token into headers for authorization in Oauth 2.0
-            request.mutate().header(AUTHORIZE_TOKEN, token);
-
-            return chain.filter(exchange);
-        } catch (Exception e) {
+        // we don't need to verify JWT token anymore, oauth2 will complete the verification
+        if(StringUtils.isEmpty(token)) {
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return response.setComplete();
+        } else {
+            if(!token.startsWith("bearer ") && !token.startsWith("Bearer ")) {
+                token = "bearer " + token;
+            }
+
+            // put the token in headers for oauth2 resource server
+            final String finalToken = token;
+            request.mutate().headers(httpHeaders -> httpHeaders.set(AUTHORIZE_TOKEN, finalToken));
+
+            return chain.filter(exchange);
         }
     }
 

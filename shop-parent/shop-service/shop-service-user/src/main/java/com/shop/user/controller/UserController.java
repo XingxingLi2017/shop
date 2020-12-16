@@ -9,6 +9,7 @@ import com.shop.user.service.UserService;
 import com.shop.util.IdWorker;
 import com.shop.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
@@ -95,6 +96,7 @@ public class UserController {
         return new Result<User>(true,StatusCode.OK,"Get User successfully.",user);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping
     public Result<List<User>> findAll(){
         List<User> list = userService.findAll();

@@ -60,12 +60,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return null;
         }
 
-        // get User by username
         String pwd = new BCryptPasswordEncoder().encode("myshop");
+
+        // get User by username
 //        String pwd = userFeign.findByUsername(username).getData().getPassword();
 
         // authorize to user
-        String permissions = "goods_list,seckill_list";
+        String permissions = "ROLE_USER";
+        if(username.equals("xing")) {
+            permissions +=",ROLE_ADMIN";
+        }
 
         UserJwt userDetails = new UserJwt(username,pwd,AuthorityUtils.commaSeparatedStringToAuthorityList(permissions));
 

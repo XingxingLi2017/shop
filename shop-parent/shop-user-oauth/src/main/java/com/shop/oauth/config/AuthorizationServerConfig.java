@@ -132,6 +132,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
 
+        // setup RSA key pair for converter
         KeyPair keyPair = new KeyStoreKeyFactory(
                     keyProperties.getKeyStore().getLocation(),                  // java key store location
                     keyProperties.getKeyStore().getSecret().toCharArray()       // java key store secret
@@ -143,9 +144,10 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         converter.setKeyPair(keyPair);
 
-        //config CustomUserAuthenticationConverter
+        //config UserTokenConverter as customUserAuthenticationConverter for JwtAccessTokenConverter
         DefaultAccessTokenConverter accessTokenConverter = (DefaultAccessTokenConverter) converter.getAccessTokenConverter();
         accessTokenConverter.setUserTokenConverter(customUserAuthenticationConverter);
+
         return converter;
     }
 }
