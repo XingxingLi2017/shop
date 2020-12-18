@@ -17,6 +17,11 @@ eureka:
 feign:
   hystrix:
     enabled: true
+  client:
+    config:
+      default:   # config default timeout limits
+        connectTimeout: 600000 # timeout limits for consumer connect this service
+        readTimeout: 600000  # timeout limits when this service call other providers
 mybatis:
   configuration:
     map-underscore-to-camel-case: true

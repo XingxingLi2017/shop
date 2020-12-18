@@ -1,0 +1,39 @@
+server:
+  port: 18089
+spring:
+  application:
+    name: order
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://192.168.77.150:3306/changgou_order?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: 123456
+  redis:
+    host: 192.168.77.150
+    port: 6379
+  main:
+    allow-bean-definition-overriding: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:7001/eureka
+  instance:
+    prefer-ip-address: true
+feign:
+  hystrix:
+    enabled: true
+  client:
+    config:
+      default:   # config default timeout limits
+        connectTimeout: 600000 # timeout limits for consumer connect this service
+        readTimeout: 600000  # timeout limits when this service call other providers
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 600000
+          strategy: SEMAPHORE    # used for feign interceptor
+publicKeyFile: public.key

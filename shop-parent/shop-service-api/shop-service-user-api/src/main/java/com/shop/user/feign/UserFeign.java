@@ -11,6 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/user")
 public interface UserFeign {
 
-    @GetMapping("/{id}")
-    public Result<User> findByUsername(@PathVariable("id") String id);
+    @GetMapping("/load/{id}")
+    public Result<com.shop.user.pojo.User> findByUsername(@PathVariable("id") String id);
 }

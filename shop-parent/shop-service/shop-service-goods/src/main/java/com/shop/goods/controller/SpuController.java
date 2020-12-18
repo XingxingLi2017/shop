@@ -66,7 +66,7 @@ public class SpuController {
      * get goods( sku list + spu ) by spu id
      */
     @GetMapping("/goods/{id}")
-    public Result findGoodsById(@PathVariable("id") String spuId) {
+    public Result<Goods> findGoodsById(@PathVariable("id") String spuId) {
         Goods goods = spuService.findGoodsById(spuId);
         return new Result(true, StatusCode.OK, "Get goods info successfully." , goods);
     }
@@ -120,9 +120,9 @@ public class SpuController {
     }
 
     @GetMapping("/{id}")
-    public Result findById(@PathVariable String id){
-        Goods goods = spuService.findGoodsById(id);
-        return new Result(true,StatusCode.OK,"Get goods info successfully.",goods);
+    public Result<Spu> findById(@PathVariable String id){
+        Spu spu = spuService.findById(id);
+        return new Result(true,StatusCode.OK,"Get goods info successfully.", spu);
     }
 
     @GetMapping

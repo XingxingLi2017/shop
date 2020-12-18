@@ -90,8 +90,8 @@ public class UserController {
         return new Result(true,StatusCode.OK,"Add User successfully.");
     }
 
-    @GetMapping("/{id}")
-    public Result<User> findById(@PathVariable String id){
+    @GetMapping({"/{id}","/load/{id}"})
+    public Result<User> findById(@PathVariable("id") String id){
         User user = userService.findById(id);
         return new Result<User>(true,StatusCode.OK,"Get User successfully.",user);
     }

@@ -1,5 +1,6 @@
 package com.shop.oauth.config;
 
+import com.shop.entity.Result;
 import com.shop.oauth.util.UserJwt;
 import com.shop.user.feign.UserFeign;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,37 +39,46 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        // if not authenticated , used in authorization_code mode
+        // client info verification
+        // if client is not authenticated in authorization_code mode
         if(authentication == null) {
 
-            // use http basic authentication , Authorization: BASIC Base64[client_id:client_secret]
+            // use http basic authentication , Authorization: BASIC Base64(client_id:client_secret) in headers
+            // load client id and secret from DB oauth_client_details table
             ClientDetails clientDetails = clientDetailsService.loadClientByClientId(username);
 
             if(clientDetails != null) {
                 String clientSecret = clientDetails.getClientSecret();
 
                 // static
-                return new User(username,new BCryptPasswordEncoder().encode(clientSecret), AuthorityUtils.commaSeparatedStringToAuthorityList(""));
+//                return new User(username,new BCryptPasswordEncoder().encode(clientSecret), AuthorityUtils.commaSeparatedStringToAuthorityList(""));
 
                 // dynamically get client info from DB
-//                return new User(username,clientSecret, AuthorityUtils.commaSeparatedStringToAuthorityList(""));
+                return new User(username, clientSecret, AuthorityUtils.commaSeparatedStringToAuthorityList(""));
             }
         }
+
+        // user info verification
 
         // when authenticated by password
         if(StringUtils.isEmpty(username)) {
             return null;
         }
 
-        String pwd = new BCryptPasswordEncoder().encode("myshop");
+//        String pwd = new BCryptPasswordEncoder().encode("myshop");
 
         // get User by username
-//        String pwd = userFeign.findByUsername(username).getData().getPassword();
+        Result<com.shop.user.pojo.User> result = userFeign.findByUsername(username);
+        if(result == null || result.getData() == null) {
+            return null;
+        }
+        com.shop.user.pojo.User user = result.getData();
+        String pwd = user.getPassword();
 
         // authorize to user
         String permissions = "ROLE_USER";
-        if(username.equals("xing")) {
-            permissions +=",ROLE_ADMIN";
+        if(user.getUsername().equals("xing")) {
+            permissions += ",ROLE_ADMIN";
         }
 
         UserJwt userDetails = new UserJwt(username,pwd,AuthorityUtils.commaSeparatedStringToAuthorityList(permissions));

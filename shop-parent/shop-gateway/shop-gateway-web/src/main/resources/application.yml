@@ -38,6 +38,16 @@ spring:
                 - Path=/api/user/**,/api/address/**,/api/areas/**,/api/cities/**,/api/provinces/**
               filters:
                 - StripPrefix=1
+            - id: shop-order-route
+              uri: lb://order
+              predicates:
+                - Path=/api/cart/**,/api/categoryReport/**,/api/orderConfig/**,/api/order/**,/api/orderItem/**,/api/orderLog/**,/api/preferential/**,/api/returnCause/**,/api/returnOrder/**,/api/returnOrderItem/**
+              filters:
+                - StripPrefix=1
+            - id: shop-user-auth-route
+              uri: lb://user-auth
+              predicates:
+                - Path=/user/login
 server:
   port: 8001
 eureka:

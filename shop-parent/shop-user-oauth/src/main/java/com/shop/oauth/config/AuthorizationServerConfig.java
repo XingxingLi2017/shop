@@ -58,21 +58,25 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
      */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-//        clients.jdbc(dataSource).clients(clientDetails());
-          clients.inMemory()
-                .withClient("shop")          // client id
-                .secret("shop")                      // client secret
-                .redirectUris("http://localhost")       // redirect uri
-                .accessTokenValiditySeconds(600)          //token duration
-                .refreshTokenValiditySeconds(600)         // refresh token duration
-                .authorizedGrantTypes(
-                        "authorization_code",
-                        "client_credentials",
-                        "refresh_token",                // enable refresh token
-                        "password")                     // grant_type = code + client_credentials + password
-                .scopes("app");                         // client scope , required , usually use app
+        clients.jdbc(dataSource).clients(clientDetails());
+//          clients.inMemory()
+//                .withClient("shop")          // client id
+//                .secret("shop")                      // client secret
+//                .redirectUris("http://localhost")       // redirect uri
+//                .accessTokenValiditySeconds(600)          //token duration
+//                .refreshTokenValiditySeconds(600)         // refresh token duration
+//                .authorizedGrantTypes(
+//                        "authorization_code",
+//                        "client_credentials",
+//                        "refresh_token",                // enable refresh token
+//                        "password")                     // grant_type = code + client_credentials + password
+//                .scopes("app");                         // client scope , required , usually use app
     }
 
+    /***
+     * Get client info from DB , used in UserDetailService
+     * @return
+     */
     @Bean
     public ClientDetailsService clientDetails() {
         return new JdbcClientDetailsService(dataSource);
@@ -98,10 +102,10 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
      */
     @Override
     public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-        oauthServer.allowFormAuthenticationForClients()     // allow getting username and password by form submission
+        oauthServer.allowFormAuthenticationForClients()         // allow getting username and password by form submission
                 .passwordEncoder(new BCryptPasswordEncoder())  // BCrypt password encoder
-                .tokenKeyAccess("permitAll()")      // allow all access to url : /oauth/token_key
-                .checkTokenAccess("isAuthenticated()"); // allow authenticated access to url : /oauth/check_token
+                .tokenKeyAccess("permitAll()")                  // allow all access to url : /oauth/token_key
+                .checkTokenAccess("isAuthenticated()");         // allow authenticated access to url : /oauth/check_token
     }
 
     @Bean

@@ -23,7 +23,7 @@ public class UserLoginController {
     private String clientId;
 
     @Autowired
-    UserLoginService userLoginService;
+    private UserLoginService userLoginService;
 
     @PostMapping("/login")
     public Result login(String username, String password) throws UnsupportedEncodingException {

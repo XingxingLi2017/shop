@@ -1,12 +1,10 @@
 package com.shop.filter;
 
 
-import com.shop.util.JwtUtil;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpCookie;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -14,9 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-
-import java.util.function.Consumer;
-
 
 /***
  * global filter for user authentication in Gateway
@@ -33,6 +28,12 @@ public class AuthorizeFilter implements GlobalFilter, Ordered {
         // get token from params, cookies, headers
         ServerHttpRequest request = exchange.getRequest();
         ServerHttpResponse response = exchange.getResponse();
+
+        // release requests accessing public resource
+        String url = request.getURI().getPath();
+        if(URLFilter.isPublicResources(url)) {
+            return chain.filter(exchange);
+        }
 
         // check headers
         String token = request.getHeaders().getFirst(AUTHORIZE_TOKEN);
@@ -62,11 +63,13 @@ public class AuthorizeFilter implements GlobalFilter, Ordered {
 //            return response.setComplete();
 //        }
 
-        // we don't need to verify JWT token anymore, oauth2 will complete the verification
+        // use oauth2 to complete the verification
         if(StringUtils.isEmpty(token)) {
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return response.setComplete();
         } else {
+
+            // add "bearer " before JWT token
             if(!token.startsWith("bearer ") && !token.startsWith("Bearer ")) {
                 token = "bearer " + token;
             }
