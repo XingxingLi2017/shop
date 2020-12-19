@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SkuServiceImpl implements SkuService {
@@ -134,5 +135,20 @@ public class SkuServiceImpl implements SkuService {
     @Override
     public List<Sku> findAll() {
         return skuMapper.selectAll();
+    }
+
+    @Override
+    public void decrCount(Map<String, String> decrMap) {
+        decrMap.forEach((key, value) -> {
+            Long skuId = Long.parseLong(key);
+            Integer decrNum = Integer.parseInt(value);
+
+            // decrease if decrNum <= inventory , use row lock in DB to solve synchronization problem
+            int count = skuMapper.decrCount(skuId, decrNum);
+            if(count <= 0) {
+                throw  new RuntimeException("Don't have enough inventory, rollback transaction");
+            }
+
+        });
     }
 }

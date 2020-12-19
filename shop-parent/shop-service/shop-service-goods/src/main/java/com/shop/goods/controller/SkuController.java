@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -18,6 +19,16 @@ public class SkuController {
 
     @Autowired
     private SkuService skuService;
+
+    /***
+     * reduce inventory after selling
+     * @return
+     */
+    @GetMapping("/decr/count")
+    public Result decrCount(@RequestParam Map<String, String> decrMap){
+        skuService.decrCount(decrMap);
+        return new Result(true, StatusCode.OK, "Decrease inventory successfully.");
+    }
 
     @GetMapping("/status/{status}")
     public Result<List<Sku>> findByStatus(@PathVariable String status){

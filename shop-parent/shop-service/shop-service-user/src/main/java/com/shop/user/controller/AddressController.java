@@ -5,10 +5,12 @@ import com.shop.entity.Result;
 import com.shop.entity.StatusCode;
 import com.shop.user.pojo.Address;
 import com.shop.user.service.AddressService;
+import com.shop.util.TokenDecoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -18,6 +20,13 @@ public class AddressController {
 
     @Autowired
     private AddressService addressService;
+
+    @GetMapping("/user/list")
+    public Result<List<Address>> list(){
+        Map<String, String> userInfo = TokenDecoder.getUserInfo();
+        List<Address> list = addressService.list(userInfo.get("username"));
+        return new Result(true, StatusCode.OK, "Get user addresses successfully." , list);
+    }
 
     @PostMapping("/search/{page}/{size}" )
     public Result<PageInfo> findPage(@RequestBody(required = false)  Address address, @PathVariable  int page, @PathVariable  int size){

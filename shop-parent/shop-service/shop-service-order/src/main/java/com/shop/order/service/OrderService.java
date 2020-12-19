@@ -18,8 +18,10 @@ public interface OrderService {
     void update(Order order);
 
     void add(Order order);
+    void add(Order order, String[] skuIds);
 
-     Order findById(String id);
+    Order findById(String id);
 
     List<Order> findAll();
+
 }

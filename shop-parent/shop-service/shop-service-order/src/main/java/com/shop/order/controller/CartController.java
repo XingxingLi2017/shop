@@ -35,14 +35,14 @@ public class CartController {
      */
     @GetMapping("/add")
     public Result add(@RequestParam("num") Integer num, @RequestParam("id") Long skuId) {
-        Map<String, String> userInfo = TokenDecoder.getUserInfo(publicKeyFileName);
+        Map<String, String> userInfo = TokenDecoder.getUserInfo();
         cartService.add(num, skuId, userInfo.get("username"));
         return new Result(true, StatusCode.OK, "Add item into cart successfully.");
     }
 
     @GetMapping("/list")
     public Result<List<OrderItem>> list(){
-        Map<String, String> userInfo = TokenDecoder.getUserInfo(publicKeyFileName);
+        Map<String, String> userInfo = TokenDecoder.getUserInfo();
         List<OrderItem> list = cartService.list(userInfo.get("username"));
         return new Result(true, StatusCode.OK, "Get items in cart successfully.", list);
     }

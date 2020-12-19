@@ -16,12 +16,21 @@ public class SkuController {
     @Autowired
     SkuService skuService;
 
+    /***
+     * import skuInfo indices from goods.tb_sku table
+     * @return
+     */
     @GetMapping("/import")
     public Result importData(){
         skuService.importData();
         return new Result(true, StatusCode.OK, "Import successfully.");
     }
 
+    /***
+     * search in skuInfo index by searchMap
+     * @param searchMap
+     * @return
+     */
     @GetMapping
     public Map search(@RequestParam(required = false) Map<String, Object> searchMap){
         return (Map) skuService.search(searchMap);

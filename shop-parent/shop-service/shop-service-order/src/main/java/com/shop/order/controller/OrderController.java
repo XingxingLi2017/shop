@@ -5,6 +5,7 @@ import com.shop.entity.Result;
 import com.shop.entity.StatusCode;
 import com.shop.order.pojo.Order;
 import com.shop.order.service.OrderService;
+import com.shop.util.TokenDecoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +40,6 @@ public class OrderController {
 
     @DeleteMapping("/{id}" )
     public Result delete(@PathVariable String id){
-        //调用OrderService实现根据主键删除
         orderService.delete(id);
         return new Result(true,StatusCode.OK,"Delete Order successfully.");
     }
@@ -52,9 +52,12 @@ public class OrderController {
     }
 
     @PostMapping
-    public Result add(@RequestBody   Order order){
-        //调用OrderService实现添加Order
-        orderService.add(order);
+    public Result add(@RequestBody Order order , @RequestParam(value = "ids", required = false) String[] skuIds){
+        if(skuIds != null && skuIds.length > 0) {
+            orderService.add(order, skuIds);
+        } else {
+            orderService.add(order);
+        }
         return new Result(true,StatusCode.OK,"Add Order successfully.");
     }
 

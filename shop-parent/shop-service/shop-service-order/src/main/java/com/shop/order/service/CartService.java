@@ -9,9 +9,9 @@ public interface CartService {
     /***
      * add order item to cart
      * @param num
-     * @param id
+     * @param skuId
      */
-    void add(Integer num, Long id , String username);
+    void add(Integer num, Long skuId , String username);
 
     /***
      * list order items in user's cart

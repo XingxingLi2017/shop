@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface AddressService {
 
+    List<Address> list(String username);
+
     PageInfo<Address> findPage(Address address, int page, int size);
 
     PageInfo<Address> findPage(int page, int size);

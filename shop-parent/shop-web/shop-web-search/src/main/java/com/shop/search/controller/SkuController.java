@@ -45,6 +45,10 @@ public class SkuController {
         return "search";
     }
 
+    /****
+     * porcess '+' sign in params
+     * @param searchMap
+     */
     private void validateSearchMap(Map<String, Object> searchMap) {
         if(searchMap != null) {
             for(Map.Entry<String, Object> entry : searchMap.entrySet()) {
@@ -54,8 +58,8 @@ public class SkuController {
     }
 
     private String[] url(Map<String, Object> searchMap){
-        String ret = "/search/list";
-        String sortRet = "/search/list";
+        String ret = "/search/list";                // original url without sort rules
+        String sortRet = "/search/list";            // used in sorting
         StringBuilder sortUrl = new StringBuilder(ret);
         StringBuilder url = new StringBuilder(sortRet);
         if(searchMap != null && searchMap.size() > 0) {

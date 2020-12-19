@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class TokenDecoder {
 
     private static String publicKey;
+    private static String publicKeyFile = "public.key";
 
     /***
      * get user info
@@ -27,6 +28,11 @@ public class TokenDecoder {
     public static Map<String, String> getUserInfo(String pubKeyFileName) {
         OAuth2AuthenticationDetails details = (OAuth2AuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
         return decodeToken(details.getTokenValue() , pubKeyFileName);
+    }
+
+    public static Map<String, String> getUserInfo() {
+        OAuth2AuthenticationDetails details = (OAuth2AuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        return decodeToken(details.getTokenValue() , publicKeyFile);
     }
 
     /***

@@ -27,10 +27,10 @@ public class CartServiceImpl implements CartService {
 
 
     @Override
-    public void add(Integer num, Long id , String username) {
+    public void add(Integer num, Long skuId , String username) {
         // handle negative number
         if(num <= 0) {
-            redisTemplate.boundHashOps("Cart_" + username).delete(id);
+            redisTemplate.boundHashOps("Cart_" + username).delete(skuId);
 
             // remove empty cart
             List values = redisTemplate.boundHashOps("Cart_" + username).values();
@@ -41,7 +41,7 @@ public class CartServiceImpl implements CartService {
         }
 
         // get spu and sku
-        Result<Sku> skuResult = skuFeign.findById(id + "");
+        Result<Sku> skuResult = skuFeign.findById(skuId + "");
         Sku sku = skuResult.getData();
 
         Result<Spu> spuResult = spuFeign.findById(sku.getSpuId());
@@ -50,7 +50,7 @@ public class CartServiceImpl implements CartService {
         OrderItem orderItem = createOrderItem(num, sku, spu);
 
         // save into redis
-        redisTemplate.boundHashOps("Cart_" + username).put(id, orderItem);
+        redisTemplate.boundHashOps("Cart_" + username).put(skuId, orderItem);
     }
 
     /***

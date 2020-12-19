@@ -2,15 +2,22 @@ package com.shop.order.service.impl;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.shop.goods.feign.SkuFeign;
+import com.shop.order.dao.OrderItemMapper;
 import com.shop.order.dao.OrderMapper;
 import com.shop.order.pojo.Order;
+import com.shop.order.pojo.OrderItem;
 import com.shop.order.service.OrderService;
+import com.shop.user.feign.UserFeign;
+import com.shop.util.IdWorker;
+import com.shop.util.TokenDecoder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -18,6 +25,91 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private OrderMapper orderMapper;
 
+    @Autowired
+    private IdWorker idWorker;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private OrderItemMapper orderItemMapper;
+
+    @Autowired
+    private SkuFeign skuFeign;
+
+    @Autowired
+    private UserFeign userFeign;
+
+
+    @Override
+    public void add(Order order){
+        String username = TokenDecoder.getUserInfo().get("username");
+
+        // add order common info into tb_order
+
+        order.setId(idWorker.nextId() + "");
+        order.setUsername(username);
+        order.setCreateTime(new Date());
+        order.setUpdateTime(order.getCreateTime());
+        order.setSourceType("1");  // comes from web
+        order.setOrderStatus("0");  // not completed
+        order.setPayStatus("0");
+        order.setIsDelete("0");
+
+        // get total number and money of products in cart
+        List<OrderItem> orderItems = redisTemplate.boundHashOps("Cart_" + username).values();
+        int totalNum = 0;
+        int totalMoney = 0;
+        Map<String, String> decrMap = new HashMap<>();  // used for decrease inventory
+
+        for(OrderItem item : orderItems) {
+            totalNum += item.getNum();
+            totalMoney += item.getMoney();
+
+            item.setId(idWorker.nextId() + "");
+            item.setOrderId(order.getId());
+            item.setIsReturn("0");
+
+            decrMap.put(item.getSkuId().toString(), item.getNum().toString());
+        }
+
+        // validate order price with frontend
+        if(order.getTotalMoney() != null && order.getTotalMoney() != totalMoney) {
+            throw new RuntimeException("Order total money is different with input total money.");
+        }
+        order.setTotalNum(totalNum);
+        order.setTotalMoney(totalMoney);
+        order.setPayMoney(totalMoney);
+        orderMapper.insertSelective(order);
+
+        // add order details into tb_order_item
+        for(OrderItem item : orderItems) {
+            orderItemMapper.insertSelective(item);
+        }
+
+        // decrease inventory in GOODS service
+        skuFeign.decrCount(decrMap);
+
+        // add user points for username , representing user activity
+        userFeign.addPoints(1);
+    }
+
+    @Override
+    public void add(Order order, String[] skuIds) {
+        String username = TokenDecoder.getUserInfo().get("username");
+
+        // delete order items that are not in the cart now
+        Set<String> idsSet = new HashSet<>(Arrays.asList(skuIds));
+        Set<Long> keys = redisTemplate.boundHashOps("Cart_" + username).keys();
+        for(Long key : keys) {
+            if(!idsSet.contains(key + "")) {
+                redisTemplate.boundHashOps("Cart_" + username).delete(key);
+            }
+        }
+
+        // add order and order items
+        add(order);
+    }
 
     @Override
     public PageInfo<Order> findPage(Order order, int page, int size){
@@ -135,11 +227,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void update(Order order){
         orderMapper.updateByPrimaryKeySelective(order);
-    }
-
-    @Override
-    public void add(Order order){
-        orderMapper.insertSelective(order);
     }
 
     @Override

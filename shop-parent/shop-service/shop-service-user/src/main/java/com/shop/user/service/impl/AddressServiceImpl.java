@@ -18,6 +18,12 @@ public class AddressServiceImpl implements AddressService {
     @Autowired
     private AddressMapper addressMapper;
 
+    @Override
+    public List<Address> list(String username) {
+        Address addresss = new Address();
+        addresss.setUsername(username);
+        return  addressMapper.select(addresss);
+    }
 
     @Override
     public PageInfo<Address> findPage(Address address, int page, int size){

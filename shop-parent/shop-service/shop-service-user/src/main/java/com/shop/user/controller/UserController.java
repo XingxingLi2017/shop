@@ -8,6 +8,7 @@ import com.shop.user.pojo.User;
 import com.shop.user.service.UserService;
 import com.shop.util.IdWorker;
 import com.shop.util.JwtUtil;
+import com.shop.util.TokenDecoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -28,6 +29,13 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @GetMapping("/points/add")
+    public Result addPoints(Integer points){
+        String username = TokenDecoder.getUserInfo().get("username");
+        userService.addPoints(username, points);
+        return new Result(true, StatusCode.OK, "Add user points successfully.");
+    }
 
     @GetMapping("/login")
     public Result login(String username, String password, HttpServletResponse response){

@@ -22,6 +22,14 @@ feign:
       default:   # config default timeout limits
         connectTimeout: 600000 # timeout limits for consumer connect this service
         readTimeout: 600000  # timeout limits when this service call other providers
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+          strategy: SEMAPHORE
 mybatis:
   configuration:
     map-underscore-to-camel-case: true

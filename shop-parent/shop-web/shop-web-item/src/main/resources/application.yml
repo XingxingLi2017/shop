@@ -30,5 +30,7 @@ hystrix:
           enabled: true
         isolation:
           strategy: SEMAPHORE
+          thread:
+            timeoutInMilliseconds: 300000
 # location for generated webpages
 pagePath: C:\Users\Xingxing Li\IdeaProjects\shop\shop-parent\shop-web\shop-web-item\src\main\resources\templates\items

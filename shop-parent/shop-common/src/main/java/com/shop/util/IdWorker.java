@@ -4,6 +4,9 @@ import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 
+/***
+ * snowflake algorithm for ID generation
+ */
 public class IdWorker {
     // start time of the id worker , the base for 41 bits millisecond bits
     private final static long twepoch = 1288834974657L;

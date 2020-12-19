@@ -4,6 +4,7 @@ import com.github.pagehelper.PageInfo;
 import com.shop.goods.pojo.Sku;
 
 import java.util.List;
+import java.util.Map;
 
 public interface SkuService {
     /**
@@ -26,4 +27,10 @@ public interface SkuService {
     Sku findById(String id);
 
     List<Sku> findAll();
+
+    /***
+     * decrease inventory
+     * @param decrMap
+     */
+    void decrCount(Map<String, String> decrMap);
 }

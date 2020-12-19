@@ -88,7 +88,7 @@ public class SkuServiceImpl implements SkuService {
         // highlight pre tag and post tag
         builder.withHighlightBuilder(new HighlightBuilder().preTags("<em style='color:red'>").postTags("</em>").fragmentSize(100));
 
-        // execute query
+        // execute query , customized search result mapping
         AggregatedPage<SkuInfo> page = elasticsearchTemplate.queryForPage(
                 builder.build(),
                 SkuInfo.class,
@@ -147,6 +147,12 @@ public class SkuServiceImpl implements SkuService {
         return ret;
     }
 
+    /***
+     * Aggregations == GROUP BY clause
+     * ES query can have multiple groups in result set
+     * @param searchMap
+     * @param builder
+     */
     private void addAggregations(Map<String, Object> searchMap, NativeSearchQueryBuilder builder) {
 
         if(searchMap == null || StringUtils.isEmpty(searchMap.get("category"))) {
@@ -172,14 +178,19 @@ public class SkuServiceImpl implements SkuService {
         // build combined query
         if(searchMap != null && searchMap.size() > 0) {
 
-            // keywords filter
+            // keywords matching
             if(!StringUtils.isEmpty(searchMap.get("keywords"))) {
                 //builder.withQuery(QueryBuilders.queryStringQuery(keywords).field("name"));
+
+                // must clause == AND , should == OR
                 boolQueryBuilder.must(QueryBuilders.queryStringQuery((String) searchMap.get("keywords")).field("name"));
             }
+            // category field matching
             if(!StringUtils.isEmpty(searchMap.get("category"))) {
                 boolQueryBuilder.must(QueryBuilders.termQuery("categoryName", searchMap.get("category")));
             }
+
+            // brand field matching
             if(!StringUtils.isEmpty(searchMap.get("brand"))) {
                 boolQueryBuilder.must(QueryBuilders.termQuery("brandName", searchMap.get("brand")));
             }
@@ -189,7 +200,7 @@ public class SkuServiceImpl implements SkuService {
                 String key = entry.getKey();
                 String value = (String) entry.getValue();
                 if(key.startsWith("spec_")) {
-                    value = value.replace("\\", "");
+                    value = value.replace("\\", "");        // process '\' (3G\4G) sign
                     boolQueryBuilder.must(QueryBuilders.termQuery("specMap."+entry.getKey().substring(5)+".keyword", value));
                 }
             }
@@ -200,12 +211,14 @@ public class SkuServiceImpl implements SkuService {
                 price = price.replace("元" , "").replace("以上", "");
                 String[] prices = price.split("-");
                 if(prices.length > 0) {
-                    boolQueryBuilder.must(QueryBuilders.rangeQuery("price")
+                    boolQueryBuilder
+                            .must(QueryBuilders.rangeQuery("price")
                             .gt(Integer.parseInt(prices[0])));
                     if(prices.length > 1) {
                         try {
                             int param2 = Integer.parseInt(prices[1]);
-                            boolQueryBuilder.must(QueryBuilders.rangeQuery("price")
+                            boolQueryBuilder
+                                    .must(QueryBuilders.rangeQuery("price")
                                     .lte(param2));
                         } catch (NumberFormatException e) {
                         }
@@ -218,6 +231,7 @@ public class SkuServiceImpl implements SkuService {
         String sortField = (String) searchMap.get("sortField");
         String sortRule = (String) searchMap.get("sortRule");
         if(!StringUtils.isEmpty(sortField) && !StringUtils.isEmpty(sortRule)) {
+            // withSort == Order by
             builder.withSort(SortBuilders.fieldSort(sortField).order(SortOrder.valueOf(sortRule.toUpperCase())));
         }
 
@@ -258,7 +272,7 @@ public class SkuServiceImpl implements SkuService {
         if(stringTerms != null) {
             for(StringTerms.Bucket bucket : stringTerms.getBuckets()) {
 
-                // bucket : {key1:value1,key2:value2,key3:value3}
+                // bucket : {key1:value1, key2:value2, key3:value3}
                 String keyAsString = bucket.getKeyAsString();
                 Map<String, String> map = JSON.parseObject(keyAsString, Map.class);
 
