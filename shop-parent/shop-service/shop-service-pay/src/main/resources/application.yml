@@ -1,0 +1,39 @@
+server:
+  port: 18090
+spring:
+  application:
+    name: pay
+  profiles:
+    active: paymentInfo
+  main:
+    allow-bean-definition-overriding: true
+  rabbitmq:
+    host: 192.168.77.150
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:7001/eureka
+  instance:
+    prefer-ip-address: true
+feign:
+  hystrix:
+    enabled: true
+#hystrix
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          # use hystrix to process timeout
+          enabled: true
+        isolation:
+          strategy: SEMAPHORE
+# customized message queue and exchange config
+mq:
+  pay:
+    exchange:
+      order: exchange.order
+    queue:
+      order: queue.order
+    routing:
+      key: queue.order

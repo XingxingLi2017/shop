@@ -25,7 +25,6 @@ public class CartServiceImpl implements CartService {
     @Autowired
     SpuFeign spuFeign;
 
-
     @Override
     public void add(Integer num, Long skuId , String username) {
         // handle negative number

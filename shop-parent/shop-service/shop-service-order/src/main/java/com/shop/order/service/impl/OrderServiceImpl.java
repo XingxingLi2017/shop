@@ -11,12 +11,18 @@ import com.shop.order.service.OrderService;
 import com.shop.user.feign.UserFeign;
 import com.shop.util.IdWorker;
 import com.shop.util.TokenDecoder;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -40,6 +46,8 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private UserFeign userFeign;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     public void add(Order order){
@@ -92,6 +100,16 @@ public class OrderServiceImpl implements OrderService {
 
         // add user points for username , representing user activity
         userFeign.addPoints(1);
+
+        // send order info into delay queue in rabbitmq
+        rabbitTemplate.convertAndSend("orderDelayQueue", (Object) order.getId(), new MessagePostProcessor() {
+            @Override
+            public Message postProcessMessage(Message message) throws AmqpException {
+                // setup TTL= 1 min for the message
+                message.getMessageProperties().setExpiration("10000");
+                return message;
+            }
+        });
     }
 
     @Override
@@ -109,6 +127,58 @@ public class OrderServiceImpl implements OrderService {
 
         // add order and order items
         add(order);
+    }
+
+    /****
+     * logically delete order , rollback decreased inventory
+     */
+    @Override
+    public void deleteOrder(String outTradeNo) {
+        Order order = orderMapper.selectByPrimaryKey(outTradeNo);
+
+        order.setUpdateTime(new Date());
+        order.setPayStatus("2");    // fail to pay
+        orderMapper.updateByPrimaryKeySelective(order);
+
+        // rollback inventory
+        OrderItem item = new OrderItem();
+        item.setOrderId(order.getId());
+        List<OrderItem> orderItems = orderItemMapper.select(item);
+
+        Map<String, String> decrMap = new HashMap<>();
+        orderItems.forEach((e)->{
+            Long skuId = e.getSkuId();
+            Integer num = 0 - e.getNum();
+            decrMap.put(skuId.toString(), num.toString());
+        });
+
+        // increase inventory in GOODS service
+        skuFeign.decrCount(decrMap);
+    }
+
+    /***
+     * update order status after payment
+     * @param outTradeNo
+     * @param payTime
+     * @param transactionId
+     */
+    @Override
+    public void updateStatus(String outTradeNo, String payTime, String transactionId) {
+        Order order = orderMapper.selectByPrimaryKey(outTradeNo);
+
+        // update
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date payTimeDate = sdf.parse(payTime);
+            order.setPayTime(payTimeDate);
+            order.setPayStatus("1");
+            order.setTransactionId(transactionId);
+
+            orderMapper.updateByPrimaryKey(order);
+        } catch (ParseException e) {
+
+        }
+
     }
 
     @Override

@@ -7,6 +7,19 @@ import java.util.List;
 
 public interface OrderService {
 
+    /****
+     * logically delete order , rollback inventory
+     */
+    void deleteOrder(String outTradeNo);
+
+    /***
+     * update order status after payment
+     * @param outTradeNo
+     * @param payTime
+     * @param transactionId
+     */
+    void updateStatus(String outTradeNo, String payTime, String transactionId);
+
     PageInfo<Order> findPage(Order order, int page, int size);
 
     PageInfo<Order> findPage(int page, int size);

@@ -11,6 +11,8 @@ spring:
   redis:
     host: 192.168.77.150
     port: 6379
+  rabbitmq:
+    host: 192.168.77.150
   main:
     allow-bean-definition-overriding: true
 
@@ -36,4 +38,15 @@ hystrix:
           thread:
             timeoutInMilliseconds: 600000
           strategy: SEMAPHORE    # used for feign interceptor
+
 publicKeyFile: public.key
+
+# customized message queue and exchange config
+mq:
+  pay:
+    exchange:
+      order: exchange.order
+    queue:
+      order: queue.order
+    routing:
+      key: queue.order

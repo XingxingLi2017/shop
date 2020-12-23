@@ -19,6 +19,7 @@
         <module>shop-service-search</module>
         <module>shop-service-user</module>
         <module>shop-service-order</module>
+        <module>shop-service-pay</module>
     </modules>
 
     <dependencies>
