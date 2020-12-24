@@ -146,11 +146,11 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> orderItems = orderItemMapper.select(item);
 
         Map<String, String> decrMap = new HashMap<>();
-        orderItems.forEach((e)->{
+        for(OrderItem e : orderItems) {
             Long skuId = e.getSkuId();
             Integer num = 0 - e.getNum();
             decrMap.put(skuId.toString(), num.toString());
-        });
+        }
 
         // increase inventory in GOODS service
         skuFeign.decrCount(decrMap);

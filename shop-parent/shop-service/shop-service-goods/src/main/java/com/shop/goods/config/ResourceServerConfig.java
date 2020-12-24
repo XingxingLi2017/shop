@@ -74,7 +74,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()                                    // start authorization config for requests
-//                .antMatchers("/sku/*").permitAll()    // don't intercept user registration request
+                .antMatchers("/sku/*" , "/spu/*").permitAll()    // don't intercept requests
                 .anyRequest().authenticated();                     // intercept all the other request
     }
 }

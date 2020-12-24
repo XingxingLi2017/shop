@@ -20,6 +20,7 @@
         <module>shop-service-user</module>
         <module>shop-service-order</module>
         <module>shop-service-pay</module>
+        <module>shop-service-seckill</module>
     </modules>
 
     <dependencies>
