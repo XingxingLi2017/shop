@@ -2,14 +2,18 @@ package com.shop.seckill.service.impl;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.shop.entity.SeckillStatus;
 import com.shop.seckill.dao.SeckillOrderMapper;
 import com.shop.seckill.pojo.SeckillOrder;
 import com.shop.seckill.service.SeckillOrderService;
+import com.shop.seckill.task.MultiThreadingCreateOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -18,6 +22,44 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     @Autowired
     private SeckillOrderMapper seckillOrderMapper;
 
+    @Autowired
+    private MultiThreadingCreateOrder multiThreadingCreateOrder;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    private static final String USER_SECKILL_QUEUE = "UserQueue";
+    private static final String USER_SECKILL_STATUS_MAP = "SeckillStatus";
+
+    /***
+     * place seckill order by multiple threads
+     * push seckill order status into queue in redis
+     * @param time
+     * @param id
+     * @param username
+     * @return
+     */
+    @Override
+    public Boolean add(String time, Long id, String username) {
+        SeckillStatus status = new SeckillStatus(username, new Date(), 1, id, time);
+        // push from left , pop from right
+        redisTemplate.boundListOps(USER_SECKILL_QUEUE).leftPush(status);
+        // map used for query seckill order status
+        redisTemplate.boundHashOps(USER_SECKILL_STATUS_MAP).put(username, status);
+        // start a thread to place order
+        multiThreadingCreateOrder.createOrder();
+        return true;
+    }
+
+    /***
+     * query user's status in the queue
+     * @param username
+     * @return
+     */
+    @Override
+    public SeckillStatus queryStatus(String username) {
+        return (SeckillStatus) redisTemplate.boundHashOps(USER_SECKILL_STATUS_MAP).get(username);
+    }
 
     @Override
     public PageInfo<SeckillOrder> findPage(SeckillOrder seckillOrder, int page, int size){
@@ -103,4 +145,5 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     public List<SeckillOrder> findAll() {
         return seckillOrderMapper.selectAll();
     }
+
 }

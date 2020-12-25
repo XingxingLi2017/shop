@@ -6,6 +6,7 @@ import com.shop.seckill.dao.SeckillGoodsMapper;
 import com.shop.seckill.pojo.SeckillGoods;
 import com.shop.seckill.service.SeckillGoodsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
@@ -18,6 +19,14 @@ public class SeckillGoodsServiceImpl implements SeckillGoodsService {
     @Autowired
     private SeckillGoodsMapper seckillGoodsMapper;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+
+    @Override
+    public SeckillGoods findByTimeAndId(String time, Long id) {
+        return (SeckillGoods)redisTemplate.boundHashOps("SeckillGoods_" + time).get(id);
+    }
 
     @Override
     public PageInfo<SeckillGoods> findPage(SeckillGoods seckillGoods, int page, int size){
@@ -114,5 +123,10 @@ public class SeckillGoodsServiceImpl implements SeckillGoodsService {
     @Override
     public List<SeckillGoods> findAll() {
         return seckillGoodsMapper.selectAll();
+    }
+
+    @Override
+    public List<SeckillGoods> list(String timeInterval) {
+        return redisTemplate.boundHashOps("SeckillGoods_" + timeInterval).values();
     }
 }

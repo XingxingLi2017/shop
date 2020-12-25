@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import tk.mybatis.mapper.entity.Example;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /***
  * push goods info into redis cache
@@ -32,16 +33,25 @@ public class SeckillGoodsPushTask {
 
         // get goods in the time intervals
         for (Date time : dateMenus) {
-            String timeInterval = DateUtil.date2Str(time);
-
+            String timeInterval = "SeckillGoods_" + DateUtil.date2Str(time);
+            long timestamp = time.getTime();
+            Date newDate = new Date(timestamp);
             // construct query
             Example example = new Example(SeckillGoods.class);
             Example.Criteria criteria = example.createCriteria();
             criteria.andEqualTo("status", "1");
             criteria.andGreaterThan("stockCount", 0);
-            criteria.andGreaterThanOrEqualTo("startTime", time);
-            criteria.andLessThan("endTime", DateUtil.addDateHour(time, 2));
+            criteria.andGreaterThanOrEqualTo("startTime", time);    // UTC timezone for DB
+            Date endTime = DateUtil.addDateHour(time, 2);
+            criteria.andLessThan("endTime", endTime);
+            Set keys = redisTemplate.boundHashOps(timeInterval).keys();
+            if(keys != null && keys.size() > 0) {
+                criteria.andNotIn("id", keys);
+            }
+
+            // get goods info
             List<SeckillGoods> seckillGoods = seckillGoodsMapper.selectByExample(example);
+
 
             // put into redis
             for (SeckillGoods goods : seckillGoods) {
