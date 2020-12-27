@@ -3,7 +3,9 @@ package com.shop.seckill.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.shop.entity.SeckillStatus;
+import com.shop.seckill.dao.SeckillGoodsMapper;
 import com.shop.seckill.dao.SeckillOrderMapper;
+import com.shop.seckill.pojo.SeckillGoods;
 import com.shop.seckill.pojo.SeckillOrder;
 import com.shop.seckill.service.SeckillOrderService;
 import com.shop.seckill.task.MultiThreadingCreateOrder;
@@ -13,8 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 @Service
 public class SeckillOrderServiceImpl implements SeckillOrderService {
@@ -28,8 +33,24 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private SeckillGoodsMapper seckillGoodsMapper;
+
+    private static final String ORDER_REDIS_KEY = "SeckillOrder";
+    private static final String GOODS_REDIS_PREFIX = "SeckillGoods_";
+
+    // prevent one user placing multiple orders
     private static final String USER_SECKILL_QUEUE = "UserQueue";
-    private static final String USER_SECKILL_STATUS_MAP = "SeckillStatus";
+
+    // query user order's status
+    private static final String USER_SECKILL_QUEUE_STATUS = "UserQueueStatus";
+
+    // prevent user from placing multiple orders on the same product
+    private static final String USER_SECKILL_QUEUE_COUNT= "UserQueueCount";
+
+    // queue for preventing oversold
+    private static final String GOODS_OVERSOLD_QUEUE_PREFIX = "GoodsOversoldQueue_";
+
 
     /***
      * place seckill order by multiple threads
@@ -41,11 +62,21 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
      */
     @Override
     public Boolean add(String time, Long id, String username) {
+
+        // mark the user in the queue
+        // user can only buy one product once
+        Long count = redisTemplate.boundHashOps(USER_SECKILL_QUEUE_COUNT).increment(username, 1);
+        if(count > 1) {
+            // 100 represents user is already in queue
+            throw new RuntimeException("100");
+        }
+
         SeckillStatus status = new SeckillStatus(username, new Date(), 1, id, time);
-        // push from left , pop from right
-        redisTemplate.boundListOps(USER_SECKILL_QUEUE).leftPush(status);
         // map used for query seckill order status
-        redisTemplate.boundHashOps(USER_SECKILL_STATUS_MAP).put(username, status);
+        redisTemplate.boundHashOps(USER_SECKILL_QUEUE_STATUS).put(username, status);
+        // enqueue
+        redisTemplate.boundListOps(USER_SECKILL_QUEUE).leftPush(status);
+
         // start a thread to place order
         multiThreadingCreateOrder.createOrder();
         return true;
@@ -58,7 +89,80 @@ public class SeckillOrderServiceImpl implements SeckillOrderService {
      */
     @Override
     public SeckillStatus queryStatus(String username) {
-        return (SeckillStatus) redisTemplate.boundHashOps(USER_SECKILL_STATUS_MAP).get(username);
+        return (SeckillStatus) redisTemplate.boundHashOps(USER_SECKILL_QUEUE_STATUS).get(username);
+    }
+
+    /***
+     * update payment status for seckill order
+     * @param username
+     * @param transactionId
+     * @param endTime
+     */
+    @Override
+    public void updatePayStatus(String username, String transactionId, String endTime) {
+        SeckillOrder order = (SeckillOrder) redisTemplate.boundHashOps(ORDER_REDIS_KEY).get(username);
+        if(order != null) {
+            try {
+                // update order status , paid time
+                order.setStatus("1");
+                order.setTransactionId(transactionId);
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+                sdf.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+
+                Date payTimeDate = sdf.parse(endTime);
+                order.setPayTime(payTimeDate);
+
+                seckillOrderMapper.insertSelective(order);
+
+                // delete order in order map
+                redisTemplate.boundHashOps(ORDER_REDIS_KEY).delete(username);
+
+                // clear user info in queue
+                clearUserQueue(username);
+
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /***
+     * delete seckill order in redis
+     * @param username
+     */
+    @Override
+    public void deleteSeckillOrder(String username) {
+
+        // delete placed order in redis
+        redisTemplate.boundHashOps(ORDER_REDIS_KEY).delete(username);
+
+        // get user status in queue
+        SeckillStatus status = (SeckillStatus) redisTemplate.boundHashOps(USER_SECKILL_QUEUE_STATUS).get(username);
+        clearUserQueue(username);
+
+        // rollback inventory
+        // check redis
+        String redisGoodsKey = GOODS_REDIS_PREFIX + status.getTime();
+        SeckillGoods goods = (SeckillGoods) redisTemplate.boundHashOps(redisGoodsKey).get(status.getGoodsId());
+        if(goods == null) {
+            // update inventory in DB
+            goods = seckillGoodsMapper.selectByPrimaryKey(status.getGoodsId());
+            goods.setStockCount(1);
+            seckillGoodsMapper.updateByPrimaryKeySelective(goods);
+        } else {
+            goods.setStockCount(goods.getStockCount() + 1);
+        }
+
+        // update inventory in Redis
+        redisTemplate.boundHashOps(redisGoodsKey).put(goods.getId(), goods);
+        redisTemplate.boundHashOps(GOODS_OVERSOLD_QUEUE_PREFIX).increment(goods.getId(), 1);
+
+    }
+
+    private void clearUserQueue(String username) {
+        redisTemplate.boundHashOps(USER_SECKILL_QUEUE_COUNT).delete(username);
+        redisTemplate.boundHashOps(USER_SECKILL_QUEUE_STATUS).delete(username);
     }
 
     @Override

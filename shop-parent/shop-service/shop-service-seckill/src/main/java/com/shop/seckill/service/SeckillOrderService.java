@@ -38,4 +38,12 @@ public interface SeckillOrderService {
      * @return
      */
     SeckillStatus queryStatus(String username);
+
+    /***
+     * update payment status for seckill order
+     */
+    void updatePayStatus(String username, String transactionId, String endTime);
+
+    void deleteSeckillOrder(String username);
+
 }

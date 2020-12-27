@@ -49,10 +49,11 @@ public class WechatPayController {
 
         String xmlResult = new String(baos.toByteArray(), "UTF-8");
         Map<String, String> map = WXPayUtil.xmlToMap(xmlResult);
-        System.out.println(map);
+        String attach = map.get("attach");
+        Map<String, String> attachMap = JSON.parseObject(attach, Map.class);
 
         // send payment result to MQ
-        rabbitTemplate.convertAndSend(orderExchange, routingKey, JSON.toJSONString(map));
+        rabbitTemplate.convertAndSend(attachMap.get("exchange"), attachMap.get("routingKey"), JSON.toJSONString(map));
 
         // send ack code to wechat
         String result = "<xml>\n" +
@@ -77,6 +78,11 @@ public class WechatPayController {
 
     /****
      * create QR code
+     * paramMap
+     *      outTradeNo
+     *      totalFee
+     *      exchange
+     *      routingKey
      */
     @GetMapping("/create/native")
     public Result createNative(@RequestParam Map<String, String> paramMap) {

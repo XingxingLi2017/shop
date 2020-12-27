@@ -49,6 +49,10 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
+    /***
+     * place order and sent order info to message delay queue
+     * @param order
+     */
     @Override
     public void add(Order order){
         String username = TokenDecoder.getUserInfo().get("username");
@@ -105,8 +109,8 @@ public class OrderServiceImpl implements OrderService {
         rabbitTemplate.convertAndSend("orderDelayQueue", (Object) order.getId(), new MessagePostProcessor() {
             @Override
             public Message postProcessMessage(Message message) throws AmqpException {
-                // setup TTL= 1 min for the message
-                message.getMessageProperties().setExpiration("10000");
+                // setup TTL= 20 sec for the message
+                message.getMessageProperties().setExpiration("20000");
                 return message;
             }
         });
@@ -169,6 +173,8 @@ public class OrderServiceImpl implements OrderService {
         // update
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+
             Date payTimeDate = sdf.parse(payTime);
             order.setPayTime(payTimeDate);
             order.setPayStatus("1");

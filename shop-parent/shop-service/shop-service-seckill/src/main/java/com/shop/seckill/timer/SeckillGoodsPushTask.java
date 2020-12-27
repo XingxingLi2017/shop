@@ -24,6 +24,9 @@ public class SeckillGoodsPushTask {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    // queue for preventing oversold
+    private static final String GOODS_OVERSOLD_QUEUE_PREFIX = "GoodsOversoldQueue_";
+
     /***
      * push goods info into redis every 30 sec
      */
@@ -56,6 +59,9 @@ public class SeckillGoodsPushTask {
             // put into redis
             for (SeckillGoods goods : seckillGoods) {
                 redisTemplate.boundHashOps(timeInterval).put(goods.getId(), goods);
+
+                // prevent oversold
+                redisTemplate.boundHashOps(GOODS_OVERSOLD_QUEUE_PREFIX).increment(goods.getId(), goods.getStockCount());
             }
         }
     }

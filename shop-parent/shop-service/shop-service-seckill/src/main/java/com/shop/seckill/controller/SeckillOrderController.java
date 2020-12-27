@@ -26,15 +26,15 @@ public class SeckillOrderController {
         if(status != null) {
             return new Result(true, StatusCode.OK, "Get order status successfully." , status);
         }
-        return new Result(false, StatusCode.ERROR, "Fail to get the limited-time offer" );
+        return new Result(false, StatusCode.ERROR, "There is not your order information." );
     }
 
     /***
      * add seckill order
      */
     @RequestMapping("/add")
-    public Result add(String time, Long id) {
-        seckillOrderService.add(time, id, username);
+    public Result add(String time, Long id, @RequestParam("username") String user) {
+        seckillOrderService.add(time, id, user);
         return new Result(true, StatusCode.OK, "You are in the line now......");
     }
 }

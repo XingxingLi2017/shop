@@ -1,5 +1,6 @@
 package com.shop.pay.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.github.wxpay.sdk.WXPayUtil;
 import com.shop.pay.service.WechatPayService;
 import com.shop.util.HttpClient;
@@ -41,6 +42,19 @@ public class WechatPayServiceImpl implements WechatPayService {
         map.put("spbill_create_ip", "127.0.0.1");   // ip address for pos machine
         map.put("notify_url", notifyurl);
         map.put("trade_type", "NATIVE");
+
+        // get attach data: MQ exchange name a queue name
+        Map<String, String> attachMap = new HashMap<>();
+        attachMap.put("exchange", parameterMap.get("exchange"));
+        attachMap.put("routingKey", parameterMap.get("routingKey"));
+        // seckill order needs username
+        String username = parameterMap.get("username");
+        if(username != null) {
+            attachMap.put("username", username);
+        }
+
+        String attach = JSON.toJSONString(attachMap);
+        map.put("attach", attach);
 
         try {
             // signature

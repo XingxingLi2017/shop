@@ -15,13 +15,13 @@ public class RabbitMQConfig {
 
     // create queue
     @Bean
-    public Queue orderQueue(){
+    public Queue orderQueue() {
         return new Queue(env.getProperty("mq.pay.queue.order"));
     }
 
     // create exchange
     @Bean
-    public Exchange orderExchange(){
+    public Exchange orderExchange() {
         return new DirectExchange(env.getProperty("mq.pay.exchange.order"));
     }
 
@@ -29,5 +29,24 @@ public class RabbitMQConfig {
     @Bean
     public Binding orderQueueExchange(Queue orderQueue, Exchange orderExchange) {
         return BindingBuilder.bind(orderQueue).to(orderExchange).with(env.getProperty("mq.pay.routing.key")).noargs();
+    }
+
+    // MQ queue for seckill order
+    @Bean
+    public Queue orderSeckillQueue() {
+        return new Queue(env.getProperty("mq.pay.queue.seckillorder"));
+    }
+
+    @Bean
+    public Exchange orderSeckillExchange() {
+        return new DirectExchange(env.getProperty("mq.pay.exchange.seckillorder"));
+    }
+
+    @Bean
+    public Binding orderSeckillQueueExchange(Queue orderSeckillQueue, Exchange orderSeckillExchange) {
+        return BindingBuilder.bind(orderSeckillQueue)
+                .to(orderSeckillExchange)
+                .with(env.getProperty("mq.pay.routing.seckillkey"))
+                .noargs();
     }
 }

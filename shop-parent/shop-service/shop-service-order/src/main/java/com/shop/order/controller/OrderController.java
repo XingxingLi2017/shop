@@ -51,6 +51,12 @@ public class OrderController {
         return new Result(true,StatusCode.OK,"Update Order successfully.");
     }
 
+    /***
+     * place new order , ids are selected sku ids in cart
+     * @param order
+     * @param skuIds
+     * @return
+     */
     @PostMapping
     public Result add(@RequestBody Order order , @RequestParam(value = "ids", required = false) String[] skuIds){
         if(skuIds != null && skuIds.length > 0) {
