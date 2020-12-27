@@ -18,6 +18,11 @@
             <artifactId>shop-service-seckill-api</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.xing</groupId>
+            <artifactId>shop-service-pay-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!-- ampq -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

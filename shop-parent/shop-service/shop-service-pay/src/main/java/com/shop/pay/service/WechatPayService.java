@@ -17,4 +17,11 @@ public interface WechatPayService {
      * @return
      */
     Map queryStatus(String outTradeNo);
+
+    /***
+     * close order in wechat
+     * @param outTradeNo
+     * @return
+     */
+    Map closeOrder(String outTradeNo);
 }

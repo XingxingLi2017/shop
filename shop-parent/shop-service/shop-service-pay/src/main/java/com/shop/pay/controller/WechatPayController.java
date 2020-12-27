@@ -90,4 +90,15 @@ public class WechatPayController {
         return new Result(true, StatusCode.OK, "Create QR code successfully.", resultMap);
     }
 
+    /***
+     * close wechat order
+     * @param outTradeNo
+     * @return
+     */
+    @GetMapping("/close")
+    public Result closeOrder(String outTradeNo) {
+        Map resultMap = wechatPayService.closeOrder(outTradeNo);
+        return new Result(true, StatusCode.OK, "Close wechat order successfully.", resultMap);
+    }
+
 }

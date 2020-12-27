@@ -26,6 +26,12 @@
 
         <dependency>
             <groupId>com.xing</groupId>
+            <artifactId>shop-service-pay-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.xing</groupId>
             <artifactId>shop-service-user-api</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
@@ -40,7 +46,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
-
     </dependencies>
 
 </project>

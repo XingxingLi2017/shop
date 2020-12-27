@@ -43,7 +43,7 @@ public class WechatPayServiceImpl implements WechatPayService {
         map.put("notify_url", notifyurl);
         map.put("trade_type", "NATIVE");
 
-        // get attach data: MQ exchange name a queue name
+        // get attach data: MQ exchange name , queue name , username
         Map<String, String> attachMap = new HashMap<>();
         attachMap.put("exchange", parameterMap.get("exchange"));
         attachMap.put("routingKey", parameterMap.get("routingKey"));
@@ -108,6 +108,39 @@ public class WechatPayServiceImpl implements WechatPayService {
         } catch (Exception e) {
             e.printStackTrace();
             return new HashMap<>();
+        }
+    }
+
+    /***
+     * close order in wechat
+     * @param outTradeNo
+     * @return
+     */
+    @Override
+    public Map closeOrder(String outTradeNo) {
+        // prepare params
+        Map<String, String> map = new HashMap<>();
+
+        map.put("appid", appid);
+        map.put("mch_id", partner); // merchant id
+        map.put("nonce_str", WXPayUtil.generateNonceStr());
+        map.put("out_trade_no",outTradeNo);    // order number
+
+        try {
+            String xmlParam = WXPayUtil.generateSignedXml(map, partnerkey);
+
+            String url = "https://api.mch.weixin.qq.com/pay/closeorder";
+            HttpClient httpClient = new HttpClient(url);
+            httpClient.setHttps(true);
+            httpClient.setXmlParam(xmlParam);
+            httpClient.post();
+            String content = httpClient.getContent();
+
+            return WXPayUtil.xmlToMap(content);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new HashMap();
         }
     }
 }

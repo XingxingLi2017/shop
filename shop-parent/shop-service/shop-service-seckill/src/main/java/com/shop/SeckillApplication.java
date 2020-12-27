@@ -12,7 +12,7 @@ import tk.mybatis.spring.annotation.MapperScan;
 
 @SpringBootApplication
 @EnableEurekaClient
-@EnableFeignClients(basePackages = {})
+@EnableFeignClients(basePackages = {"com.shop.pay.feign"})
 @MapperScan(basePackages = {"com.shop.seckill.dao"})
 @EnableScheduling
 @EnableAsync

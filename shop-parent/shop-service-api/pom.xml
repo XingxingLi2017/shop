@@ -18,6 +18,7 @@
         <module>shop-service-user-api</module>
         <module>shop-service-order-api</module>
         <module>shop-service-seckill-api</module>
+        <module>shop-service-pay-api</module>
     </modules>
 
     <dependencies>
