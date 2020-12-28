@@ -123,7 +123,7 @@ public class MultiThreadingCreateOrder {
             rabbitTemplate.convertAndSend(SECKILL_DELAY_MQ, (Object)JSON.toJSONString(status),new MessagePostProcessor() {
                 @Override
                 public Message postProcessMessage(Message message) throws AmqpException {
-                    message.getMessageProperties().setExpiration("20000");
+                    message.getMessageProperties().setExpiration("60000");
                     return message;
                 }
             });

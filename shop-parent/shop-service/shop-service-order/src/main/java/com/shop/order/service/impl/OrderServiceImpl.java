@@ -110,7 +110,7 @@ public class OrderServiceImpl implements OrderService {
             @Override
             public Message postProcessMessage(Message message) throws AmqpException {
                 // setup TTL= 20 sec for the message
-                message.getMessageProperties().setExpiration("20000");
+                message.getMessageProperties().setExpiration("60000");
                 return message;
             }
         });
