@@ -15,7 +15,10 @@ spring:
     host: 192.168.77.150
   main:
     allow-bean-definition-overriding: true
-
+  cloud:
+    alibaba:
+      seata:
+        tx-service-group: my_test_tx_group
 eureka:
   client:
     service-url:
@@ -53,3 +56,10 @@ mq:
     routing:
       key: queue.order
       seckillkey: queue.seckillorder
+
+logging:
+  level:
+    com:
+      shop:
+        order:
+          dao: debug

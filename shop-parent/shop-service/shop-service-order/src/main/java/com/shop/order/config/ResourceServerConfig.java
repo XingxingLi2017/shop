@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
  * configuration class for spring security oauth2 resource server
  * identify JWT token use public key
  */
-
 @Configuration
 @EnableResourceServer
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)    // activate @PreAuthorize annotation of SpringSecurity
@@ -44,7 +43,6 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     /***
      * create JWT token converter with RSA signature verifier
      */
-
     @Bean
     public JwtAccessTokenConverter jwtAccessTokenConverter(){
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
@@ -59,7 +57,6 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     /***
      * create JWT token store
      */
-
     @Bean
     public TokenStore tokenStore(JwtAccessTokenConverter jwtAccessTokenConverter) {
         return new JwtTokenStore(jwtAccessTokenConverter);

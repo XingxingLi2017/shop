@@ -11,6 +11,7 @@ import com.shop.order.service.OrderService;
 import com.shop.user.feign.UserFeign;
 import com.shop.util.IdWorker;
 import com.shop.util.TokenDecoder;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePostProcessor;
@@ -53,6 +54,7 @@ public class OrderServiceImpl implements OrderService {
      * place order and sent order info to message delay queue
      * @param order
      */
+    @GlobalTransactional
     @Override
     public void add(Order order){
         String username = TokenDecoder.getUserInfo().get("username");

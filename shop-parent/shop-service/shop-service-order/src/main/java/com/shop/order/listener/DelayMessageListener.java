@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
  * listen on delay queue in rabbitmq, used to check order payment status
  */
 @Component
-@RabbitListener(queues={"orderListenerQueue"})
 public class DelayMessageListener {
 
 
@@ -22,7 +21,7 @@ public class DelayMessageListener {
     @Autowired
     WechatPayFeign wechatPayFeign;
 
-    @RabbitHandler
+    @RabbitListener(queues={"orderListenerQueue"})
     public void getDealyMessage(String orderId) {
         // check order payment status
         Order order = orderService.findById(orderId);
