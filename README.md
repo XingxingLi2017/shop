@@ -14,7 +14,7 @@ Mainly includes 9 modules:
 ![image](https://github.com/XingxingLi2017/shop/blob/master/project-image/ShopArchitecture.PNG)
 # Technology Stack
   ## Deployment and maintainence
-    * VMWare and CentOS 7
+    * CentOS 7
     * Maven
     * Docker and docker compose
     * MySql and Canal
